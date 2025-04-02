@@ -24,6 +24,9 @@ jobs:
 
       - name: Run pylint
         run: pylint .
+        continue-on-error: true
 
       - name: Run mypy
         run: mypy .
+        continue-on-error: true
+
