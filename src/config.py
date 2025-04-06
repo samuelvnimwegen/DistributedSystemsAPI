@@ -1,11 +1,12 @@
 """
 This file contains the configuration classes for the application.
+
+Disclaimer: This is based on our bachelor eindwerk project setup, which I also largely contributed to.
 """
 import random
 import string
 from enum import Enum
 from typing import Optional
-
 from confz import BaseConfig
 
 

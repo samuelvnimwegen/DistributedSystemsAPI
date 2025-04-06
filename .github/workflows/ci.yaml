@@ -23,7 +23,7 @@ jobs:
           pip install mypy pylint
 
       - name: Run pylint
-        run: pylint .
+        run: pylint src/ tests/
 
       - name: Run mypy
-        run: mypy .
+        run: mypy src/

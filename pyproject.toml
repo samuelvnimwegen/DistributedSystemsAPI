@@ -7,15 +7,22 @@ dependencies = [
     "flask>=1.3.0",
     "dotenv>=0.0.5",
     "flask_cors>=5.0.1",
-    "flask_restx>=0.2.0",
     "flask_session>=0.4.0",
     "flask_sqlalchemy>=2.5.0",
     "confz>=2.1.0",
     "pylint>=3.0.0",
     "mypy>=1.0.0",
-    "psycopg2-binary>=2.9.10"
+    "psycopg2-binary>=2.9.10",
+    "flasgger>=0.9.7.1",
+    "requests>=2.32.3",
+    "pytest_postgresql>=7.0.0",
+    "pylint>=3.3.6",
 ]
 
+
+######################################################################################################################
+# Pylint configuration
+######################################################################################################################
 [tool.pylint]
 max-line-length = 120
 disable = [
@@ -24,6 +31,10 @@ disable = [
     "too-few-public-methods"
 ]
 fail-under = 10.0
+
+#######################################################################################################################
+# Mypy configuration
+#######################################################################################################################
 
 [tool.mypy]
 python_version = "3.12"
@@ -35,3 +46,22 @@ disallow_incomplete_defs = true
 warn_redundant_casts = true
 warn_unused_configs = true
 
+[[tool.mypy.overrides]]
+module = "src.config.*"  # Ignore the src/config.py file
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "src.app.*"  # Ignore the src/app.py file
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "src.routes.*"  # Ignore the src/routes directory because of the flask-restx decorators
+ignore_errors = true
+
+########################################################################################################################
+# Pytest configuration
+########################################################################################################################
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]

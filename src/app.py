@@ -2,27 +2,35 @@
 This module is the entry point of the application.
 It sets up the Flask app with the given configuration
 from the environment variables (in .env file or in the system).
+
+Disclaimer: This is based on our bachelor eindwerk project setup, which I also largely contributed to.
 """
 import logging
 import os
-
+from dotenv import load_dotenv
 from confz import EnvSource
 from flask import Flask
 from flask_cors import CORS
 from src.config import APIConfig
 from src.database.database import db
 from src.routes import register_public_routes
-# from src.routes.error_handlers import register_error_handlers
+
+load_dotenv()
 
 
 def create_app(api_config: APIConfig) -> Flask:
     """
     Set up the Flask app with the given configuration from the environment variables
     (in .env file or in the system)
+
+    Disclaimer: This is a commonly used setup for Flask applications, it could be used in other projects as well.
     :param api_config: The configuration to use
     """
-    logging.basicConfig(level=api_config.logging.get_level(),
-                        format=api_config.logging.format, filename=api_config.logging.file)
+    logging.basicConfig(
+        level=api_config.logging.get_level(),
+        format=api_config.logging.format,
+        filename=api_config.logging.file
+    )
 
     logging.info("Setting up %s", api_config.name)
 
@@ -35,10 +43,6 @@ def create_app(api_config: APIConfig) -> Flask:
     CORS(flask_app)
 
     db.init_app(flask_app)
-
-    # Register the error handlers and public routes
-    # if not api_config.debug:
-    #     register_error_handlers(flask_app)
 
     register_public_routes(flask_app)
 

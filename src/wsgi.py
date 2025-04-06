@@ -1,5 +1,7 @@
 """
 WSGI config for src project.
+
+Disclaimer: This is based on our bachelor eindwerk project setup, which I also largely contributed to.
 """
 from confz import EnvSource
 from src.app import create_app

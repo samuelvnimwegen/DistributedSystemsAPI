@@ -1,6 +1,8 @@
 """
 This module is responsible for dynamically importing all other routes in the
 'routes' directory
+
+Disclaimer: This is based on our bachelor eindwerk project setup, which I also largely contributed to.
 """
 import importlib
 import os
