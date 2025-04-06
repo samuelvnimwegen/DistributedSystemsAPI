@@ -4,10 +4,11 @@ on:
   push:
 
 jobs:
-  lint:
+  test-and-lint:
     name: Run mypy and pylint
     runs-on: ubuntu-latest
-
+    env:
+      TMDB_ACCESS_TOKEN: ${{ secrets.TMDB_ACCESS_TOKEN }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
