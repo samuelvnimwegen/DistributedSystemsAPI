@@ -2,7 +2,7 @@
 Test the movie resource, and all the routes in it.
 """
 from io import BytesIO
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 import pytest
 
 
@@ -185,8 +185,10 @@ def test_get_score_plot(client):
     try:
         image = Image.open(BytesIO(response.data))
         image.verify()
-    except Exception as e:
-        pytest.fail(f"Invalid image response: {e}")
+    except UnidentifiedImageError as e:
+        pytest.fail(f"Invalid image format: {e}")
+    except IOError as e:
+        pytest.fail(f"IO error when opening image: {e}")
 
 
 def test_get_score_plot_invalid_movie_ids(client):

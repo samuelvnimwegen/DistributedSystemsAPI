@@ -6,8 +6,6 @@ import json
 import logging
 import os
 import requests
-import urllib.parse
-import requests
 from flask import send_file
 from flask_restx import Namespace, Api, Resource, fields
 from src.routes.quickchart import QuickChartDataItem, create_quickchart_config
