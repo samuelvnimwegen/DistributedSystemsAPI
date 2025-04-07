@@ -43,6 +43,14 @@ movie_list_model = movies_api.model(
     }
 )
 
+get_same_genres_parser = movies_api.parser()
+get_same_genres_parser.add_argument(
+    "movie_id",
+    type=int,
+    required=True,
+    help="ID of the movie to get similar movies for",
+)
+
 
 @movies_api.route('/popular', methods=['GET'])
 class PopularMoviesResource(Resource):
@@ -81,6 +89,64 @@ class PopularMoviesResource(Resource):
             movies_api.abort(response.status_code, "Failed to fetch data from TMDb.")
 
         movies = response.json().get("results", [])[:amount]
+
+        return {"results": movies}
+
+
+@movies_api.route('/same_genres', methods=['GET'])
+class SameGenresResource(Resource):
+    """
+    Resource for fetching movies with the same genres as a given movie.
+    """
+
+    @movies_api.expect(get_same_genres_parser)
+    @movies_api.marshal_with(movie_list_model)
+    def get(self):
+        """
+        Get a list of movies with the same genres.
+
+        Returns a list of movies with the same genres from the TMDB API.
+        """
+        args = get_same_genres_parser.parse_args()
+        movie_id = args.get("movie_id")
+
+        headers = {
+            "Authorization": f"Bearer {TMDB_ACCESS_TOKEN}",
+            "Accept": "application/json"
+        }
+
+        # Get the movie with the given ID
+        response = requests.get(
+            f"https://api.themoviedb.org/3/movie/{movie_id}",
+            headers=headers,
+            timeout=10,
+        )
+
+        if response.status_code != 200:
+            movies_api.abort(response.status_code, "Failed to fetch data from TMDb.")
+
+        genres = response.json().get("genres", [])
+        genre_ids: list[int] = [genre["id"] for genre in genres]
+        if not genre_ids:
+            movies_api.abort(400, "No genres found for the given movie ID.")
+
+        # Get movies with the same genres
+        params = {
+            "with_genres": ",".join(map(str, genre_ids)),
+            "sort_by": "popularity.desc",
+        }
+        response = requests.get(
+            "https://api.themoviedb.org/3/discover/movie",
+            headers=headers,
+            params=params,
+            timeout=10,
+        )
+        if response.status_code != 200:
+            movies_api.abort(response.status_code, "Failed to fetch data from TMDb.")
+        movies = response.json().get("results", [])
+
+        # Remove the movie that is queries
+        movies = [movie for movie in movies if movie["id"] != movie_id]
 
         return {"results": movies}
 

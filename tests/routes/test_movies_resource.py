@@ -76,3 +76,55 @@ def test_get_popular_content(client):
     assert isinstance(movie["vote_average"], float)
     assert isinstance(movie["vote_count"], int)
     assert isinstance(movie["backdrop_path"], str)
+
+
+def test_get_same_genres_related_movie(client):
+    """
+    Test the /same_genres route with a related movie.
+    """
+    # Test with invalid movie_id
+    response = client.get("/api/movies/same_genres?movie_id=0")
+    assert response.status_code == 404
+
+    # Test with ID of a popular movie (the Minecraft movie)
+    mc_movie_id = 950387
+    response = client.get(f"/api/movies/same_genres?movie_id={mc_movie_id}")
+    assert response.status_code == 200
+
+    # See that the movie with the title "Shrek" is in the list of related movies
+    assert "results" in response.json
+    assert isinstance(response.json["results"], list)
+    assert len(response.json["results"]) > 0
+    assert any(movie["title"] == "Shrek" for movie in response.json["results"])
+
+
+def test_get_same_genres_no_related_movie(client):
+    """
+    Test the /same_genres route with a movie that has no related movies.
+    """
+    # Test with ID of a movie that Shrek is not related to (Captain America: Brave New World)
+    cap_america_id = 822119
+    response = client.get(f"/api/movies/same_genres?movie_id={cap_america_id}")
+    assert response.status_code == 200
+
+    # See that the movie with the title "Shrek" is not in the list of related movies
+    assert "results" in response.json
+    assert isinstance(response.json["results"], list)
+    assert len(response.json["results"]) > 0
+    assert not any(movie["title"] == "Shrek" for movie in response.json["results"])
+
+
+def test_get_same_genres_movie_itself_excluded(client):
+    """
+    Test the /same_genres route to see whether the movie that is queried is not in the results.
+    """
+    # Test with ID of a popular movie (the Minecraft movie)
+    mc_movie_id = 950387
+    response = client.get(f"/api/movies/same_genres?movie_id={mc_movie_id}")
+    assert response.status_code == 200
+
+    # See that the movie with the title "Shrek" is not in the list of related movies
+    assert "results" in response.json
+    assert isinstance(response.json["results"], list)
+    assert len(response.json["results"]) > 0
+    assert not any(movie["title"] == "A Minecraft Movie" for movie in response.json["results"])
