@@ -1,6 +1,9 @@
 """
 Test the movie resource, and all the routes in it.
 """
+from io import BytesIO
+from PIL import Image
+import pytest
 
 
 def assert_correct_film_list(response) -> None:
@@ -167,3 +170,40 @@ def test_get_similar_runtime_movie_itself_excluded(client):
     response = client.get(f"/api/movies/{mc_movie_id}/similar_runtime")
     assert_correct_film_list(response)
     assert not any(movie["title"] == "A Minecraft Movie" for movie in response.json["results"])
+
+
+def test_get_score_plot(client):
+    """
+    Test the /score-plot route.
+    """
+    # Test with IDs of 2 popular movies (the Minecraft movie and Mufasa: The Lion King)
+    movie_ids = [950387, 1021004]
+    response = client.get("/api/movies/score-plot", query_string={"movie_ids": ",".join(map(str, movie_ids))})
+    assert response.status_code == 200, f"Expected status code 200, got {response.status_code}"
+    assert response.content_type.startswith("image/"), f"Expected content type image/, got {response.content_type}"
+    assert len(response.data) > 0, "Expected non-empty response data"
+    try:
+        image = Image.open(BytesIO(response.data))
+        image.verify()
+    except Exception as e:
+        pytest.fail(f"Invalid image response: {e}")
+
+
+def test_get_score_plot_invalid_movie_ids(client):
+    """
+    Test the /score-plot route with invalid movie IDs.
+    """
+    # Test with invalid movie IDs
+    movie_ids = [0]
+    response = client.get("/api/movies/score-plot", query_string={"movie_ids": ",".join(map(str, movie_ids))})
+    assert response.status_code == 404, f"Expected status code 404, got {response.status_code}"
+
+
+def test_get_score_plot_no_movie_ids(client):
+    """
+    Test the /score-plot route with no movie IDs.
+    """
+    # Test with no movie IDs
+    movie_ids = []
+    response = client.get("/api/movies/score-plot", query_string={"movie_ids": ",".join(map(str, movie_ids))})
+    assert response.status_code == 400, f"Expected status code 400, got {response.status_code}"

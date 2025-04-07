@@ -1,10 +1,16 @@
 """
 This module contains the database access class that contains all the access methods
 """
+import io
+import json
 import logging
 import os
 import requests
+import urllib.parse
+import requests
+from flask import send_file
 from flask_restx import Namespace, Api, Resource, fields
+from src.routes.quickchart import QuickChartDataItem, create_quickchart_config
 
 TMDB_ACCESS_TOKEN = os.getenv("TMDB_ACCESS_TOKEN")
 
@@ -47,6 +53,15 @@ movie_list_model = movies_api.model(
     {
         "results": fields.List(fields.Nested(movie_model), description="List of movies"),
     }
+)
+
+score_plot_parser = movies_api.parser()
+score_plot_parser.add_argument(
+    "movie_ids",
+    type=int,
+    action="split",
+    required=True,
+    help="List of movie IDs to fetch scores for",
 )
 
 
@@ -192,6 +207,63 @@ class SimilarRuntimeResource(Resource):
         }
         results = query_movies(headers, params, movie_id)
         return results
+
+
+@movies_api.route('/score-plot', methods=['GET'])
+class ScorePlotResource(Resource):
+    """
+    Resource for fetching a score plot for a set of movies.
+    """
+
+    @movies_api.expect(score_plot_parser)
+    def get(self):
+        """
+        Get a score plot for a set of movies.
+        """
+        # Parse the movie IDs from the request arguments
+        movie_ids: list[int] = score_plot_parser.parse_args().get("movie_ids", [])
+        if not movie_ids:
+            movies_api.abort(400, "No movie IDs provided.")
+
+        # Get the ratings for the movies
+        results: list[QuickChartDataItem] = []
+        for movie_id in movie_ids:
+            response = requests.get(
+                f"https://api.themoviedb.org/3/movie/{movie_id}",
+                headers=API_HEADERS,
+                timeout=10,
+            )
+            if response.status_code != 200:
+                movies_api.abort(response.status_code, "Failed to fetch data from TMDb.")
+            results.append(QuickChartDataItem(
+                title=response.json().get("original_title", ""),
+                rating=response.json().get("vote_average", 0),
+            ))
+
+        # Generate the quickchart configuration
+        chart_config = create_quickchart_config(results)
+
+        # Send the quickchart request
+        quickchart_url = "https://quickchart.io/chart"
+        response = requests.get(
+            quickchart_url,
+            params={"c": json.dumps(chart_config)},
+            timeout=10,
+        )
+        logging.info("QuickChart response: %s", response.status_code)
+
+        if response.status_code != 200:
+            movies_api.abort(
+                response.status_code, f"Failed to fetch data from QuickChart. Original error: {response.text}"
+            )
+
+        # Return the URL of the generated chart
+        return send_file(
+            io.BytesIO(response.content),
+            mimetype="image/png",
+            as_attachment=False,
+            download_name="chart.png",
+        )
 
 
 def register_routes(api_blueprint: Api) -> None:
