@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TMDB_ACCESS_TOKEN: ${{ secrets.TMDB_ACCESS_TOKEN }}
+      TMDB_ACCOUNT_ID: ${{ secrets.TMDB_ACCOUNT_ID }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

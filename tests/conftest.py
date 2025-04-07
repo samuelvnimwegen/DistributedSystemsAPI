@@ -4,13 +4,18 @@ The fixtures are used to create a test database and provide an SQLAlchemy sessio
 
 Disclaimer: This is based on our bachelor eindwerk project setup, which I also largely contributed to.
 """
+import os
 from pytest_postgresql import factories
 from pytest_postgresql.janitor import DatabaseJanitor
 import pytest
 from sqlalchemy import text
+
 from src.config import APIConfig, LoggingConfig, DBConfig, LogLevel
 from src.app import create_app
 from src.database import db
+
+TMDB_ACCESS_TOKEN = os.getenv("TMDB_ACCESS_TOKEN")
+TMDB_ACCOUNT_ID = os.getenv("TMDB_ACCOUNT_ID")
 
 test_db = factories.postgresql_proc(port=None, dbname="test_db")
 
@@ -88,3 +93,14 @@ def client(app, db_session):  # pylint: disable=unused-argument
     """
     with app.test_client() as client:
         return client
+
+
+@pytest.fixture(scope="session")
+def auth_headers() -> dict[str, str]:
+    """
+    This fixture returns authentication headers for the test client.
+    """
+    return {
+        "Authorization": f"Bearer {TMDB_ACCESS_TOKEN}",
+        "Accept": "application/json"
+    }

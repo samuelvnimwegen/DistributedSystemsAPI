@@ -11,6 +11,7 @@ from flask_restx import Namespace, Api, Resource, fields
 from src.routes.quickchart import QuickChartDataItem, create_quickchart_config
 
 TMDB_ACCESS_TOKEN = os.getenv("TMDB_ACCESS_TOKEN")
+TMDB_ACCOUNT_ID = os.getenv("TMDB_ACCOUNT_ID")
 
 API_HEADERS = {
     "Authorization": f"Bearer {TMDB_ACCESS_TOKEN}",
@@ -62,6 +63,12 @@ score_plot_parser.add_argument(
     help="List of movie IDs to fetch scores for",
 )
 
+is_favorite_model = movies_api.model(
+    "IsFavorite",
+    {
+        "is_favorite": fields.Boolean(description="Is the movie a favorite"),
+    },
+)
 
 def query_movies(headers: dict[str, str | int], params: dict[str, str | int], original_movie_id: int):
     """
@@ -262,6 +269,109 @@ class ScorePlotResource(Resource):
             as_attachment=False,
             download_name="chart.png",
         )
+
+
+@movies_api.route('/favorite/<int:movie_id>', methods=['POST', 'DELETE', 'GET'])
+class ChangeFavoriteResource(Resource):
+    """
+    Resource for changing the favorite status of a movie.
+    """
+
+    @movies_api.doc(params={"movie_id": "The ID of the movie to add to favorites."})
+    def post(self, movie_id):
+        """
+        Add a movie to the favorite list.
+        """
+        # Get the request data
+        data = {
+            "media_type": "movie",
+            "media_id": movie_id,
+            "favorite": True,
+        }
+
+        # Send the request to the TMDb API
+        response = requests.post(
+            f"https://api.themoviedb.org/3/account/{TMDB_ACCOUNT_ID}/favorite",
+            headers=API_HEADERS,
+            json=data,
+            timeout=10,
+        )
+
+        if response.status_code != 201:
+            movies_api.abort(response.status_code, "Failed to fetch data from TMDb.")
+
+        return {"message": "Movie added to favorites."}
+
+    @movies_api.doc(params={"movie_id": "The ID of the movie to remove from favorites."})
+    def delete(self, movie_id):
+        """
+        Remove a movie from the favorite list.
+        """
+        # Get the request data
+        data = {
+            "media_type": "movie",
+            "media_id": movie_id,
+            "favorite": False,
+        }
+
+        # Send the request to the TMDb API
+        response = requests.post(
+            f"https://api.themoviedb.org/3/account/{TMDB_ACCOUNT_ID}/favorite",
+            headers=API_HEADERS,
+            json=data,
+            timeout=10,
+        )
+
+        if response.status_code != 200:
+            movies_api.abort(response.status_code, "Failed to fetch data from TMDb.")
+
+        return {"message": "Movie removed from favorites."}
+
+    @movies_api.doc(params={"movie_id": "The ID of the movie to check if it's a favorite."})
+    @movies_api.marshal_with(is_favorite_model)
+    def get(self, movie_id):
+        """
+        Get the favorite status of a movie. This is whether the movie is in the favorite list or not.
+        """
+        # Send the request to the TMDb API
+        response = requests.get(
+            f"https://api.themoviedb.org/3/account/{TMDB_ACCOUNT_ID}/favorite/movies",
+            headers=API_HEADERS,
+            timeout=10,
+        )
+
+        if response.status_code != 200:
+            movies_api.abort(response.status_code, "Failed to fetch data from TMDb.")
+
+        # Check if the movie is in the favorite list
+        movies = response.json().get("results", [])
+        is_favorite = any(movie["id"] == movie_id for movie in movies)
+
+        return {"is_favorite": is_favorite}
+
+
+@movies_api.route('/favorite', methods=['GET'])
+class GetFavoriteMoviesResource(Resource):
+    """
+    Resource for fetching the favorite movies of a user.
+    """
+
+    @movies_api.marshal_with(movie_list_model)
+    def get(self):
+        """
+        Get the favorite movies of a user.
+        """
+        # Send the request to the TMDb API
+        response = requests.get(
+            f"https://api.themoviedb.org/3/account/{TMDB_ACCOUNT_ID}/favorite/movies",
+            headers=API_HEADERS,
+            timeout=10,
+        )
+
+        if response.status_code != 200:
+            movies_api.abort(response.status_code, "Failed to fetch data from TMDb.")
+
+        return response.json()
 
 
 def register_routes(api_blueprint: Api) -> None:
