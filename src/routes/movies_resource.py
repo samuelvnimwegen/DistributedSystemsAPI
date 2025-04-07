@@ -1,11 +1,17 @@
 """
 This module contains the database access class that contains all the access methods
 """
+import logging
 import os
 import requests
 from flask_restx import Namespace, Api, Resource, fields
 
 TMDB_ACCESS_TOKEN = os.getenv("TMDB_ACCESS_TOKEN")
+
+API_HEADERS = {
+    "Authorization": f"Bearer {TMDB_ACCESS_TOKEN}",
+    "Accept": "application/json"
+}
 
 movies_api = Namespace("movies", description="Movie Operations")
 
@@ -43,13 +49,29 @@ movie_list_model = movies_api.model(
     }
 )
 
-get_same_genres_parser = movies_api.parser()
-get_same_genres_parser.add_argument(
-    "movie_id",
-    type=int,
-    required=True,
-    help="ID of the movie to get similar movies for",
-)
+
+def query_movies(headers: dict[str, str | int], params: dict[str, str | int], original_movie_id: int):
+    """
+    Query the TMDb API for movies with the given parameters.
+    :param headers: The headers to include in the request.
+    :param params: The parameters to include in the request.
+    :param original_movie_id: The ID of the original movie to exclude from the results.
+    :return:
+    """
+    response = requests.get(
+        "https://api.themoviedb.org/3/discover/movie",
+        headers=headers,
+        params=params,
+        timeout=10,
+    )
+    if response.status_code != 200:
+        movies_api.abort(response.status_code, "Failed to fetch data from TMDb.")
+    movies = response.json().get("results", [])
+
+    # Remove the movie that is queries
+    movies = [movie for movie in movies if movie["id"] != original_movie_id]
+
+    return {"results": movies}
 
 
 @movies_api.route('/popular', methods=['GET'])
@@ -93,23 +115,55 @@ class PopularMoviesResource(Resource):
         return {"results": movies}
 
 
-@movies_api.route('/same_genres', methods=['GET'])
+@movies_api.route('/<int:movie_id>/same_genres', methods=['GET'])
+@movies_api.doc(params={"movie_id": "The ID of the movie to get movies with the same genres for."})
 class SameGenresResource(Resource):
     """
     Resource for fetching movies with the same genres as a given movie.
     """
 
-    @movies_api.expect(get_same_genres_parser)
     @movies_api.marshal_with(movie_list_model)
-    def get(self):
+    def get(self, movie_id):
         """
         Get a list of movies with the same genres.
 
         Returns a list of movies with the same genres from the TMDB API.
         """
-        args = get_same_genres_parser.parse_args()
-        movie_id = args.get("movie_id")
+        # Get the movie with the given ID
+        response = requests.get(
+            f"https://api.themoviedb.org/3/movie/{movie_id}",
+            headers=API_HEADERS,
+            timeout=10,
+        )
+        if response.status_code != 200:
+            movies_api.abort(response.status_code, "Failed to fetch data from TMDb.")
 
+        genres = response.json().get("genres", [])
+        genre_ids: list[int] = [genre["id"] for genre in genres]
+        if not genre_ids:
+            movies_api.abort(400, "No genres found for the given movie ID.")
+
+        # Get movies with the same genres
+        params = {
+            "with_genres": ",".join(map(str, genre_ids)),
+            "sort_by": "popularity.desc",
+        }
+        results = query_movies(API_HEADERS, params, movie_id)
+        return results
+
+
+@movies_api.route('/<int:movie_id>/similar_runtime', methods=['GET'])
+@movies_api.doc(params={"movie_id": "The ID of the movie to get movies with a similar runtime for."})
+class SimilarRuntimeResource(Resource):
+    """
+    Resource for fetching movies with the same runtime as a given movie (+- 10 minutes).
+    """
+
+    @movies_api.marshal_with(movie_list_model)
+    def get(self, movie_id):
+        """
+        Get a list of movies with the same runtime (+- 10 minutes)
+        """
         headers = {
             "Authorization": f"Bearer {TMDB_ACCESS_TOKEN}",
             "Accept": "application/json"
@@ -125,30 +179,19 @@ class SameGenresResource(Resource):
         if response.status_code != 200:
             movies_api.abort(response.status_code, "Failed to fetch data from TMDb.")
 
-        genres = response.json().get("genres", [])
-        genre_ids: list[int] = [genre["id"] for genre in genres]
-        if not genre_ids:
-            movies_api.abort(400, "No genres found for the given movie ID.")
+        runtime = response.json().get("runtime", 0)
+        logging.info("Runtime: %s", runtime)
+        if runtime == 0:
+            movies_api.abort(400, "No runtime found for the given movie ID.")
 
-        # Get movies with the same genres
+        # Get movies with the same runtime
         params = {
-            "with_genres": ",".join(map(str, genre_ids)),
+            "with_runtime.gte": runtime - 10,
+            "with_runtime.lte": runtime + 10,
             "sort_by": "popularity.desc",
         }
-        response = requests.get(
-            "https://api.themoviedb.org/3/discover/movie",
-            headers=headers,
-            params=params,
-            timeout=10,
-        )
-        if response.status_code != 200:
-            movies_api.abort(response.status_code, "Failed to fetch data from TMDb.")
-        movies = response.json().get("results", [])
-
-        # Remove the movie that is queries
-        movies = [movie for movie in movies if movie["id"] != movie_id]
-
-        return {"results": movies}
+        results = query_movies(headers, params, movie_id)
+        return results
 
 
 def register_routes(api_blueprint: Api) -> None:

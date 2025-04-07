@@ -3,6 +3,18 @@ Test the movie resource, and all the routes in it.
 """
 
 
+def assert_correct_film_list(response) -> None:
+    """
+    Assert that the response is a correct film list.
+    :param response: The response to check
+    :return: None
+    """
+    assert response.status_code == 200
+    assert "results" in response.json
+    assert isinstance(response.json["results"], list)
+    assert len(response.json["results"]) > 0
+
+
 def test_get_popular_amount(client):
     """
     Test the /popular route with different amounts.
@@ -83,18 +95,16 @@ def test_get_same_genres_related_movie(client):
     Test the /same_genres route with a related movie.
     """
     # Test with invalid movie_id
-    response = client.get("/api/movies/same_genres?movie_id=0")
+    response = client.get(f"/api/movies/{0}/same_genres")
     assert response.status_code == 404
 
     # Test with ID of a popular movie (the Minecraft movie)
     mc_movie_id = 950387
-    response = client.get(f"/api/movies/same_genres?movie_id={mc_movie_id}")
+    response = client.get(f"/api/movies/{mc_movie_id}/same_genres")
     assert response.status_code == 200
 
     # See that the movie with the title "Shrek" is in the list of related movies
-    assert "results" in response.json
-    assert isinstance(response.json["results"], list)
-    assert len(response.json["results"]) > 0
+    assert_correct_film_list(response)
     assert any(movie["title"] == "Shrek" for movie in response.json["results"])
 
 
@@ -104,13 +114,11 @@ def test_get_same_genres_no_related_movie(client):
     """
     # Test with ID of a movie that Shrek is not related to (Captain America: Brave New World)
     cap_america_id = 822119
-    response = client.get(f"/api/movies/same_genres?movie_id={cap_america_id}")
+    response = client.get(f"/api/movies/{cap_america_id}/same_genres")
     assert response.status_code == 200
 
     # See that the movie with the title "Shrek" is not in the list of related movies
-    assert "results" in response.json
-    assert isinstance(response.json["results"], list)
-    assert len(response.json["results"]) > 0
+    assert_correct_film_list(response)
     assert not any(movie["title"] == "Shrek" for movie in response.json["results"])
 
 
@@ -120,11 +128,42 @@ def test_get_same_genres_movie_itself_excluded(client):
     """
     # Test with ID of a popular movie (the Minecraft movie)
     mc_movie_id = 950387
-    response = client.get(f"/api/movies/same_genres?movie_id={mc_movie_id}")
+    response = client.get(f"/api/movies/{mc_movie_id}/same_genres")
     assert response.status_code == 200
 
     # See that the movie with the title "Shrek" is not in the list of related movies
-    assert "results" in response.json
-    assert isinstance(response.json["results"], list)
-    assert len(response.json["results"]) > 0
+    assert_correct_film_list(response)
+    assert not any(movie["title"] == "A Minecraft Movie" for movie in response.json["results"])
+
+
+def test_get_similar_runtime_similar(client):
+    """
+    Test the /similar_runtime route with a movie that has similar runtime.
+    """
+    # Test with ID of a popular movie (the Minecraft movie)
+    mc_movie_id = 950387
+    response = client.get(f"/api/movies/{mc_movie_id}/similar_runtime")
+    assert_correct_film_list(response)
+    assert any(movie["title"] == "Snow White" for movie in response.json["results"])
+
+
+def test_get_similar_runtime_not_similar(client):
+    """
+    Test the /similar_runtime route with a movie that has not similar runtime.
+    """
+    # Test with ID of a popular movie (the Minecraft movie)
+    mc_movie_id = 950387
+    response = client.get(f"/api/movies/{mc_movie_id}/similar_runtime")
+    assert_correct_film_list(response)
+    assert not any(movie["title"] == "Interstellar" for movie in response.json["results"])
+
+
+def test_get_similar_runtime_movie_itself_excluded(client):
+    """
+    Test the /similar_runtime route to see whether the movie that is queried is not in the results.
+    """
+    # Test with ID of a popular movie (the Minecraft movie)
+    mc_movie_id = 950387
+    response = client.get(f"/api/movies/{mc_movie_id}/similar_runtime")
+    assert_correct_film_list(response)
     assert not any(movie["title"] == "A Minecraft Movie" for movie in response.json["results"])
