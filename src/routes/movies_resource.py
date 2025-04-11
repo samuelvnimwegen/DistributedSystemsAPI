@@ -9,6 +9,7 @@ import requests
 from flask import send_file
 from flask_restx import Namespace, Api, Resource, fields
 from src.routes.quickchart import QuickChartDataItem, create_quickchart_config
+from src.cache import cache
 
 TMDB_ACCESS_TOKEN = os.getenv("TMDB_ACCESS_TOKEN")
 TMDB_ACCOUNT_ID = os.getenv("TMDB_ACCOUNT_ID")
@@ -70,6 +71,7 @@ is_favorite_model = movies_api.model(
     },
 )
 
+
 def query_movies(headers: dict[str, str | int], params: dict[str, str | int], original_movie_id: int):
     """
     Query the TMDb API for movies with the given parameters.
@@ -94,10 +96,11 @@ def query_movies(headers: dict[str, str | int], params: dict[str, str | int], or
     return {"results": movies}
 
 
-@movies_api.route('/popular', methods=['GET'])
+@movies_api.route('', methods=['GET'])
 class PopularMoviesResource(Resource):
     @movies_api.expect(get_popular_parser)
     @movies_api.marshal_with(movie_list_model)
+    @cache.cached(query_string=True)
     def get(self):
         """
         Get a list of popular movies.
@@ -135,6 +138,33 @@ class PopularMoviesResource(Resource):
         return {"results": movies}
 
 
+@movies_api.route('/<int:movie_id>', methods=['GET'])
+class MovieResource(Resource):
+    """
+    Resource for fetching movie details.
+    """
+
+    @movies_api.doc(params={"movie_id": "The ID of the movie to fetch."})
+    @movies_api.marshal_with(movie_model)
+    @cache.cached()
+    def get(self, movie_id):
+        """
+        Get movie details by ID.
+
+        Returns the details of a movie from the TMDB API.
+        """
+        # Get the movie with the given ID
+        response = requests.get(
+            f"https://api.themoviedb.org/3/movie/{movie_id}",
+            headers=API_HEADERS,
+            timeout=10,
+        )
+        if response.status_code != 200:
+            movies_api.abort(response.status_code, "Failed to fetch data from TMDb.")
+
+        return response.json()
+
+
 @movies_api.route('/<int:movie_id>/same_genres', methods=['GET'])
 @movies_api.doc(params={"movie_id": "The ID of the movie to get movies with the same genres for."})
 class SameGenresResource(Resource):
@@ -143,6 +173,7 @@ class SameGenresResource(Resource):
     """
 
     @movies_api.marshal_with(movie_list_model)
+    @cache.cached()
     def get(self, movie_id):
         """
         Get a list of movies with the same genres.
@@ -180,6 +211,7 @@ class SimilarRuntimeResource(Resource):
     """
 
     @movies_api.marshal_with(movie_list_model)
+    @cache.cached()
     def get(self, movie_id):
         """
         Get a list of movies with the same runtime (+- 10 minutes)
@@ -221,6 +253,7 @@ class ScorePlotResource(Resource):
     """
 
     @movies_api.expect(score_plot_parser)
+    @cache.cached(query_string=True)
     def get(self):
         """
         Get a score plot for a set of movies.

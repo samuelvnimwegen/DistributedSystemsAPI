@@ -19,3 +19,5 @@ SQLAlchemy~=2.0.39
 pytest~=8.3.5
 pytest-postgresql~=7.0.1
 pillow~=11.1.0
+Flask-Caching~=2.3.1
+Flask-Limiter~=3.12

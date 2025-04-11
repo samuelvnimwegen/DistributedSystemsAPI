@@ -23,35 +23,35 @@ def test_get_popular_amount(client):
     Test the /popular route with different amounts.
     """
     # Test with invalid amounts
-    response = client.get("/api/movies/popular?amount=21")
+    response = client.get("/api/movies?amount=21")
     assert response.status_code == 400
     assert response.json == {"message": "Maximum amount allowed amount is 20."}
 
-    response = client.get("/api/movies/popular?amount=0")
+    response = client.get("/api/movies?amount=0")
     assert response.status_code == 400
     assert response.json == {"message": "Minimum amount allowed amount is 1."}
 
     # Test with valid amounts
-    response = client.get("/api/movies/popular?amount=1")
+    response = client.get("/api/movies?amount=1")
     assert response.status_code == 200
     assert "results" in response.json
     assert isinstance(response.json["results"], list)
     assert len(response.json["results"]) == 1
 
-    response = client.get("/api/movies/popular?amount=5")
+    response = client.get("/api/movies?amount=5")
     assert response.status_code == 200
     assert "results" in response.json
     assert isinstance(response.json["results"], list)
     assert len(response.json["results"]) == 5
 
-    response = client.get("/api/movies/popular?amount=20")
+    response = client.get("/api/movies?amount=20")
     assert response.status_code == 200
     assert "results" in response.json
     assert isinstance(response.json["results"], list)
     assert len(response.json["results"]) == 20
 
     # No amount specified
-    response = client.get("/api/movies/popular")
+    response = client.get("/api/movies")
     assert response.status_code == 200
     assert "results" in response.json
     assert isinstance(response.json["results"], list)
@@ -62,7 +62,7 @@ def test_get_popular_content(client):
     """
     Test the /popular route for valid content.
     """
-    response = client.get("/api/movies/popular?amount=1")
+    response = client.get("/api/movies?amount=1")
     assert response.status_code == 200
     assert "results" in response.json
     assert isinstance(response.json["results"], list)
@@ -271,3 +271,45 @@ def test_add_and_remove_favorite_movie(client, auth_headers):
         response = client.post(f"/api/movies/favorite/{950387}", headers=auth_headers)
         assert response.status_code == 200
         assert response.json == {"message": "Movie added to favorites."}
+
+
+def test_get_movie_by_id(client, auth_headers):
+    """
+    Test the /movie/{movie_id} route.
+    """
+    # Test with invalid movie ID
+    response = client.get(f"/api/movies/{0}", headers=auth_headers)
+    assert response.status_code == 404
+
+    # Test with valid movie ID (the minecraft movie)
+    mc_movie_id = 950387
+    response = client.get(f"/api/movies/{mc_movie_id}", headers=auth_headers)
+    assert response.status_code == 200
+    assert "id" in response.json
+    assert "title" in response.json
+    assert "overview" in response.json
+    assert "release_date" in response.json
+    assert "poster_path" in response.json
+    assert "popularity" in response.json
+    assert "vote_average" in response.json
+    assert "vote_count" in response.json
+    assert "backdrop_path" in response.json
+    assert "adult" in response.json
+    assert "genre_ids" in response.json
+    assert isinstance(response.json["id"], int)
+    assert isinstance(response.json["title"], str)
+    assert isinstance(response.json["overview"], str)
+    assert isinstance(response.json["release_date"], str)
+    assert isinstance(response.json["poster_path"], str)
+    assert isinstance(response.json["popularity"], float)
+    assert isinstance(response.json["vote_average"], float)
+    assert isinstance(response.json["vote_count"], int)
+
+
+def test_get_movie_by_id_invalid(client, auth_headers):
+    """
+    Test the /movie/{movie_id} route with an invalid movie ID.
+    """
+    # Test with invalid movie ID
+    response = client.get(f"/api/movies/{0}", headers=auth_headers)
+    assert response.status_code == 404

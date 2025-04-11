@@ -14,6 +14,8 @@ from flask_cors import CORS
 from src.config import APIConfig
 from src.database.database import db
 from src.routes import register_public_routes
+from src.cache import cache
+from src.limiter import limiter
 
 load_dotenv()
 
@@ -43,6 +45,12 @@ def create_app(api_config: APIConfig) -> Flask:
     CORS(flask_app)
 
     db.init_app(flask_app)
+
+    # The flask cache
+    cache.init_app(flask_app)
+
+    # The flask limiter
+    limiter.init_app(flask_app)
 
     register_public_routes(flask_app)
 
