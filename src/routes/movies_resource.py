@@ -8,6 +8,7 @@ import os
 import requests
 from flask import send_file
 from flask_restx import Namespace, Api, Resource, fields
+from flask_jwt_extended import jwt_required
 from src.routes.quickchart import QuickChartDataItem, create_quickchart_config
 from src.cache import cache
 
@@ -101,6 +102,7 @@ class PopularMoviesResource(Resource):
     @movies_api.expect(get_popular_parser)
     @movies_api.marshal_with(movie_list_model)
     @cache.cached(query_string=True)
+    @jwt_required()
     def get(self):
         """
         Get a list of popular movies.

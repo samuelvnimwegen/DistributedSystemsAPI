@@ -5,14 +5,18 @@ The fixtures are used to create a test database and provide an SQLAlchemy sessio
 Disclaimer: This is based on our bachelor eindwerk project setup, which I also largely contributed to.
 """
 import os
+
 from pytest_postgresql import factories
 from pytest_postgresql.janitor import DatabaseJanitor
 import pytest
 from sqlalchemy import text
+from flask import current_app
+from flask_jwt_extended import create_access_token
 
 from src.config import APIConfig, LoggingConfig, DBConfig, LogLevel
 from src.app import create_app
 from src.database import db
+from src.database.models import User
 
 TMDB_ACCESS_TOKEN = os.getenv("TMDB_ACCESS_TOKEN")
 TMDB_ACCOUNT_ID = os.getenv("TMDB_ACCOUNT_ID")
@@ -92,6 +96,8 @@ def client(app, db_session):  # pylint: disable=unused-argument
     Return a Flask test client for making requests.
     """
     with app.test_client() as client:
+        user: User = __create_user()
+        __add_jwt_cookie(client, user)
         return client
 
 
@@ -104,3 +110,42 @@ def auth_headers() -> dict[str, str]:
         "Authorization": f"Bearer {TMDB_ACCESS_TOKEN}",
         "Accept": "application/json"
     }
+
+
+def __create_user() -> User:
+    """
+    This function creates a test user in the database.
+    """
+    db.session.expunge_all()
+
+    # Create a new user if not found
+    user = User(
+        username="test_user",
+        password="password",
+        is_active=True,
+        is_admin=False
+    )
+    db.session.add(user)
+    db.session.commit()
+    return user
+
+
+def __add_jwt_cookie(client, user: User) -> str:
+    """
+    This function adds a JWT cookie to the test client.
+    """
+
+    cookie_name = current_app.config['JWT_COOKIE_NAME']
+    token: str = create_access_token(identity=user, fresh=True)
+    client.set_cookie(
+        cookie_name,
+        token,
+        max_age=current_app.config['JWT_ACCESS_TOKEN_EXPIRES'],
+        secure=current_app.config['JWT_COOKIE_SECURE'],
+        httponly=True,
+        samesite='Lax',
+        domain='localhost',
+        path=current_app.config['JWT_ACCESS_COOKIE_PATH'],
+    )
+
+    return token

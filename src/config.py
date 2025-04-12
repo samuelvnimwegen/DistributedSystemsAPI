@@ -52,7 +52,7 @@ class APIConfig(BaseConfig):
     db: DBConfig
     secret_key: Optional[str] = ''.join(random.choices(string.ascii_uppercase +
                                                        string.digits, k=24))
-    debug: Optional[bool] = False
+    debug: Optional[bool] = True
     logging: LoggingConfig = LoggingConfig()
     host: Optional[str] = "0.0.0.0"
     port: Optional[int] = 8000

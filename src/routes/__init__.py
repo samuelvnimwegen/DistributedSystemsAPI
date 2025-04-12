@@ -27,7 +27,7 @@ def register_public_routes(app: Blueprint) -> None:
     api = Api(
         bp,
         version="1.0",
-        title="",
+        title="Distributed Systems API",
         description="API documentation for the Distributed Systems project API",
         doc='/'
     )
@@ -37,15 +37,16 @@ def register_public_routes(app: Blueprint) -> None:
 
     # Dynamically import all Python modules in the package
     for filename in os.listdir(package_dir):
+
+        # Check if the file is a Python module and not the __init__.py file
         if filename.endswith(".py") and filename != "__init__.py":
-            module_name = f"{__name__}.{filename[:-3]}"  # Convert to module path
-            # Dynamically load the module
+            # If a module is found, construct the module name and import it dynamically
+            module_name = f"{__name__}.{filename[:-3]}"
             module = importlib.import_module(module_name)
 
-            # If the module has a `register_routes` function, call it
+            # If the module has a `register_routes` function, call it to register the routes with the API
             if hasattr(module, "register_routes"):
                 module.register_routes(api)
 
-    # Register the Blueprint with the Flask app
-    # This must be the last step as registered blueprints cannot be modified afterwards
+    # Register the Blueprint with the Flask app, this will make the routes available to the app
     app.register_blueprint(bp)
