@@ -1,5 +1,6 @@
 """
 WSGI config for src project.
+This is used as an entry-point for the application in gunicorn.
 
 Disclaimer: This is based on our bachelor eindwerk project setup, which I also largely contributed to.
 """

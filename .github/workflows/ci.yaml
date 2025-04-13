@@ -22,14 +22,14 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip3 install -r requirements.txt
+          pip3 install -r api/requirements.txt
 
       - name: Run pylint
-        run: pylint src/ tests/
+        run: pylint api/src/ api/tests/
 
       - name: Run mypy
         run: mypy src/
 
       - name: Run pytest
         run: |
-          pytest tests/
+          pytest api/tests/
