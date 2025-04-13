@@ -101,8 +101,8 @@ def query_movies(headers: dict[str, str | int], params: dict[str, str | int], or
 class PopularMoviesResource(Resource):
     @movies_api.expect(get_popular_parser)
     @movies_api.marshal_with(movie_list_model)
-    @cache.cached(query_string=True)
     @jwt_required()
+    @cache.cached(query_string=True)
     def get(self):
         """
         Get a list of popular movies.

@@ -101,6 +101,16 @@ def client(app, db_session):  # pylint: disable=unused-argument
         return client
 
 
+@pytest.fixture(scope="function")
+def no_cookie_client(app, db_session):  # pylint: disable=unused-argument
+    """
+    Return a Flask test client for making requests without a JWT cookie.
+    """
+    with app.test_client() as client:
+        __create_user()
+        return client
+
+
 @pytest.fixture(scope="session")
 def auth_headers() -> dict[str, str]:
     """

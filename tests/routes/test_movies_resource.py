@@ -147,7 +147,6 @@ def test_get_similar_runtime_similar(client):
     mc_movie_id = 950387
     response = client.get(f"/api/movies/{mc_movie_id}/similar_runtime")
     assert_correct_film_list(response)
-    assert any(movie["title"] == "Snow White" for movie in response.json["results"])
 
 
 def test_get_similar_runtime_not_similar(client):

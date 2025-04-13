@@ -45,8 +45,8 @@ def register_error_handlers(jwt_manager: JWTManager, flask_app: Flask) -> None:
         """
         return jsonify({"message": "Token verification failed"}), 401
 
-    @flask_app.errorhandler(NoAuthorizationError)  # type: ignore
-    def handle_no_auth_error() -> tuple[Response, int]:
+    @flask_app.errorhandler(NoAuthorizationError)
+    def handle_no_auth_error(error: NoAuthorizationError) -> tuple[Response, int]:  # pylint: disable=unused-argument
         """
         Handle missing authorization header errors.
         :return:
