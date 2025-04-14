@@ -52,7 +52,7 @@ def create_app(api_config: APIConfig) -> Flask:
     CORS(flask_app, supports_credentials=True)
     db.init_app(flask_app)
     cache.init_app(flask_app)
-    limiter.init_app(flask_app)
+    # limiter.init_app(flask_app)
 
     # Initialize JWT Manager
     jwt = JWTManager(flask_app)

@@ -10,9 +10,9 @@ const LoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogin = async () => {
+    const handleSignup = async () => {
       try {
-        const response = await fetch('/api/login', {
+        const response = await fetch('/api/sign_up', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -32,11 +32,12 @@ const LoginPage = () => {
         alert('An error occurred during login');
       }
     };
+
   const handleHomeClick = () => {
     navigate('/'); // Redirect to the home page
   }
-    const handleSignupRedirect = () => {
-        navigate('/signup'); // Redirect to the signup page
+    const handleLoginRedirect = () => {
+        navigate('/login'); // Redirect to the signup page
     };
 
   return (
@@ -65,7 +66,7 @@ const LoginPage = () => {
         {/* Login Form */}
          <div className="login-page">
       <div className="login-box">
-        <h1 className="login-title">Login</h1>
+        <h1 className="login-title">Sign Up</h1>
 
         <form onSubmit={(e) => e.preventDefault()}>
           <label htmlFor="username">Username</label>
@@ -86,13 +87,13 @@ const LoginPage = () => {
             placeholder="Enter your password"
           />
 
-          <button type="button" onClick={handleLogin}>
-            Login
+          <button type="button" onClick={handleSignup}>
+            Sign Up
           </button>
         </form>
 
         <div className="signup-link">
-          <p>Don't have an account? <span onClick={handleSignupRedirect}>Sign up</span></p>
+          <p>Already have an account? <span onClick={handleLoginRedirect}>Log in</span></p>
         </div>
       </div>
 </div>

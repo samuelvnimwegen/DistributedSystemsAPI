@@ -11,6 +11,7 @@ from flask_restx import Namespace, Api, Resource, fields
 from flask_jwt_extended import jwt_required
 from src.routes.quickchart import QuickChartDataItem, create_quickchart_config
 from src.cache import cache
+from src.limiter import limiter
 
 TMDB_ACCESS_TOKEN = os.getenv("TMDB_ACCESS_TOKEN")
 TMDB_ACCOUNT_ID = os.getenv("TMDB_ACCOUNT_ID")
@@ -101,8 +102,10 @@ def query_movies(headers: dict[str, str | int], params: dict[str, str | int], or
 class PopularMoviesResource(Resource):
     @movies_api.expect(get_popular_parser)
     @movies_api.marshal_with(movie_list_model)
-    @jwt_required()
     @cache.cached(query_string=True)
+    @limiter.limit("500 per hour")
+    @limiter.limit("1000 per day")
+    @limiter.limit("10000 per month")
     def get(self):
         """
         Get a list of popular movies.

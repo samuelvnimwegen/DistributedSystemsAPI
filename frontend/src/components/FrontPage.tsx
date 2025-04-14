@@ -1,4 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // Import useHistory to handle navigation
+import '../css/FrontPage.css';
+import {useAuth} from "../auth/AuthContext.tsx"; // Import your CSS file for custom styles
 
 type Movie = {
   id: number;
@@ -7,66 +10,133 @@ type Movie = {
   releaseDate: string;
 };
 
-const sampleMovies: Movie[] = [
-  {
-    id: 1,
-    title: 'Inception',
-    posterUrl: 'https://image.tmdb.org/t/p/w500/qmDpIHrmpJINaRKAfWQfftjCdyi.jpg',
-    releaseDate: '2010-07-16',
-  },
-  {
-    id: 2,
-    title: 'The Dark Knight',
-    posterUrl: 'https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg',
-    releaseDate: '2008-07-18',
-  },
-  {
-    id: 3,
-    title: 'Interstellar',
-    posterUrl: 'https://image.tmdb.org/t/p/w500/rAiYTfKGqDCRIIqo664sY9XZIvQ.jpg',
-    releaseDate: '2014-11-07',
-  },
-];
+type APIMovieResponse = {
+  id: number;
+  title: string;
+  poster_path: string;
+  release_date: string;
+}
 
 const FrontPage: React.FC = () => {
-  return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <h1 className="text-4xl font-bold text-center mb-8">🎬 Welcome to MovieVerse</h1>
+  const [movies, setMovies] = useState<Movie[]>([]);
+  const navigate = useNavigate(); // Get the navigate function
+    const { isAuthenticated } = useAuth();
 
-      <section className="mb-12">
+  useEffect(() => {
+    const fetchMovies = async () => {
+      try {
+        const response = await fetch('/api/movies?amount=20');
+        const data = await response.json();
+
+        const transformed: Movie[] = data.results.map((movie: APIMovieResponse) => ({
+          id: movie.id,
+          title: movie.title,
+          posterUrl: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
+          releaseDate: movie.release_date,
+        }));
+
+        setMovies(transformed);
+      } catch (error) {
+        console.error('Failed to fetch movies:', error);
+      }
+    };
+
+    fetchMovies();
+  }, []);
+
+  if (movies.length === 0) {
+    return (
+      <div className="p-6 max-w-7xl mx-auto text-center text-lg text-gray-500">
+        Loading movies...
+      </div>
+    );
+  }
+    const handleLoginClick = () => {
+    navigate('/login'); // Redirect to /login when the login button is clicked
+  };
+
+
+  return (
+    <div style={{paddingTop: '0'}}>
+      <header className="top-bar">
+          {!isAuthenticated && <button
+              onClick={handleLoginClick}
+              className="login-button"
+              style={{
+                  position: 'absolute',
+                  right: '20px', // Changed from left to right
+                  top: '20px',
+                  padding: '10px 20px',
+                  backgroundColor: '#4CAF50',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: 'pointer'
+              }}
+          >
+              Login
+          </button>}
+        <h1 className="top-bar-title">Welcome to Absolute Cinema</h1>
+          {isAuthenticated && <button
+              onClick={() => navigate('/dashboard')}
+              className="login-button"
+              style={{
+                  position: 'absolute',
+                  right: '20px', // Changed from left to right
+                  top: '20px',
+                  padding: '10px 20px',
+                  backgroundColor: 'white',
+                  color: 'black',
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: 'pointer'
+              }}
+          >
+              Dashboard
+          </button>}
+      </header>
+
+      {/* Featured Movie Section */}
+      <section className="featured-section featured-container">
         <h2 className="text-2xl font-semibold mb-4">Featured Movie</h2>
-        <div className="bg-gray-800 text-white rounded-lg overflow-hidden shadow-lg flex flex-col md:flex-row">
+        <div className="bg-gray-800 text-white rounded-lg overflow-hidden shadow-lg flex flex-col md:flex-row transition-transform duration-300 hover:scale-105 hover:shadow-2xl cursor-pointer">
           <img
-            src={sampleMovies[0].posterUrl}
-            alt={sampleMovies[0].title}
+            src={movies[0]?.posterUrl}
+            alt={movies[0]?.title}
             className="w-full md:w-1/3 object-cover"
           />
           <div className="p-6">
-            <h3 className="text-3xl font-bold">{sampleMovies[0].title}</h3>
-            <p className="mt-2 text-gray-300">Released: {sampleMovies[0].releaseDate}</p>
-            <p className="mt-4 text-gray-400">
-              Dive into a mind-bending thriller by Christopher Nolan. Explore dreams within dreams and challenge your reality.
-            </p>
+            <h3 className="text-3xl font-bold">{movies[0]?.title}</h3>
+            <p className="mt-2 text-gray-300">Released: {movies[0]?.releaseDate}</p>
           </div>
         </div>
       </section>
 
-      <section>
-        <h2 className="text-2xl font-semibold mb-4">Popular Picks</h2>
-        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {sampleMovies.map((movie) => (
-            <div key={movie.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:scale-105 transition">
-              <img src={movie.posterUrl} alt={movie.title} className="w-full h-72 object-cover" />
-              <div className="p-4">
-                <h3 className="text-xl font-semibold">{movie.title}</h3>
-                <p className="text-gray-600 text-sm">Released: {movie.releaseDate}</p>
+      {/* Popular Picks Section with Rotating Bar */}
+      <section className="full-width-section">
+        <h2 className="text-2xl font-semibold mb-4">Popular Movies</h2>
+        <div className="scroll-container">
+          {/* Rotating container */}
+          <div className="scrolling-row">
+            {movies.map((movie) => (
+              <div key={movie.id} className="movie-card">
+                <img
+                  src={movie.posterUrl}
+                  alt={movie.title}
+                  className="movie-image"
+                />
+                <div className="movie-details">
+                  <h3 className="movie-title">{movie.title}</h3>
+                  <p className="movie-release-date">Released: {movie.releaseDate}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
     </div>
   );
 };
+
 
 export default FrontPage;

@@ -6,6 +6,7 @@ import {AuthProvider} from "./auth/AuthContext.tsx";
 import PrivateRoute from "./auth/PrivateRoute.tsx";
 import LoginPage from "./components/LoginPage.tsx";
 import Dashboard from "./components/Dashboard.tsx";
+import SignUpPage from "./components/SignUpPage.tsx";
 
 function App() {
 
@@ -16,6 +17,7 @@ function App() {
         <Routes>
           <Route path="/" element={<FrontPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignUpPage />} />
           <Route
             path="/dashboard"
             element={

@@ -44,6 +44,14 @@ class SignUpResource(Resource):
         if existing_user:
             return {"message": "Username already exists"}, 400
 
+        # Check if username and password are valid
+        if not username or not password:
+            return {"message": "Username and password are required"}, 400
+        if len(username) < 3:
+            return {"message": "Username must be at least 3 characters long"}, 400
+        if len(password) < 6:
+            return {"message": "Password must be at least 6 characters long"}, 400
+
         # Create a new user
         new_user = User(username=username, password=password)
         session.add(new_user)

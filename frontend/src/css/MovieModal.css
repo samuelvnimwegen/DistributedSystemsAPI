@@ -1,0 +1,105 @@
+.modal-content {
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 10px;
+  width: 80%;
+  max-width: 1800px;
+  margin: 0 auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.close-button {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.close-button:hover {
+  background: #ff3333;
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+}
+
+.main-movie {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.modal-poster {
+  max-width: 300px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  margin-bottom: 1rem;
+}
+
+.movie-details {
+  flex: 1;
+  color: #333;
+}
+
+.movie-title {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.similar-movies {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.movies-list {
+  display: flex;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 1rem;
+}
+
+.movie-card {
+  text-align: center;
+}
+
+.movie-card img {
+  border-radius: 8px;
+}
+
+.movie-card h4 {
+  font-size: 1rem;
+  margin-top: 0.5rem;
+  color: #555;
+}
+
+.movie-card.selected {
+  border: 6px solid #4caf50; /* Green outline when selected */
+}
+
+@media (max-width: 768px) {
+  .modal-body {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .main-movie {
+    margin-bottom: 2rem;
+  }
+
+  .similar-movies {
+    margin-top: 2rem;
+  }
+}
