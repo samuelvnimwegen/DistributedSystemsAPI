@@ -35,8 +35,7 @@ jobs:
 
       - name: Run pytest
         run: |
-          pytest tests/
-        working-directory: api
+          pytest api/tests
 
   run_full_project:
     runs-on: ubuntu-latest
