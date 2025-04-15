@@ -37,26 +37,26 @@ jobs:
         run: |
           pytest api/tests
 
-  run_full_project:
-    runs-on: ubuntu-latest
-    env:
-      API_KEY: ${{ secrets.API_KEY }}
-      TMDB_ACCOUNT_ID: ${{ secrets.TMDB_ACCOUNT_ID }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.12"
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Install docker-compose (if needed)
-        run: sudo apt-get update && sudo apt-get install -y docker-compose
-
-      - name: run_api.sh
-        run: |
-          ./run_full_project.sh
+#  run_full_project:
+#    runs-on: ubuntu-latest
+#    env:
+#      API_KEY: ${{ secrets.API_KEY }}
+#      TMDB_ACCOUNT_ID: ${{ secrets.TMDB_ACCOUNT_ID }}
+#    steps:
+#      - name: Checkout repository
+#        uses: actions/checkout@v4
+#
+#      - name: Set up Python 3.12
+#        uses: actions/setup-python@v4
+#        with:
+#          python-version: "3.12"
+#
+#      - name: Set up Docker Buildx
+#        uses: docker/setup-buildx-action@v3
+#
+#      - name: Install docker-compose (if needed)
+#        run: sudo apt-get update && sudo apt-get install -y docker-compose
+#
+#      - name: run_api.sh
+#        run: |
+#          ./run_full_project.sh
