@@ -1,6 +1,6 @@
 # Distributed Systems
 
-This is the project of Samuel van Nimwegen for the university of antwerp.
+This is the project of Samuel van Nimwegen from the University of Antwerp for the Distributed Systems course.
 ## Correctness:
 The following things are tested every push on GitHub actions on https://github.com/samuelvnimwegen/DistributedSystemsAPI/actions/runs/:
 - The `./run_full_project.sh` together with `consume_api.py`

@@ -57,7 +57,7 @@ jobs:
       - name: Install docker-compose (if needed)
         run: sudo apt-get update && sudo apt-get install -y docker-compose
 
-      - name: run_api.sh
+      - name: run_full_project.sh
         run: |
           ./run_full_project.sh
 
