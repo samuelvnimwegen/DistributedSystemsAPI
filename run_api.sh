@@ -53,6 +53,9 @@ echo "Installing dependencies..."
 pip install --upgrade pip
 pip install -r requirements.txt
 
+# Upgrade alembic
+alembic upgrade head
+
 # Run the Python app with API_KEY passed as argument
 echo "Running app with API_KEY=$API_KEY..."
 python app.py --key "$API_KEY"

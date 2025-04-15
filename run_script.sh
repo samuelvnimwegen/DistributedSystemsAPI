@@ -23,10 +23,6 @@ echo "Installing dependencies..."
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# Run the Python app with API_KEY passed as argument
-echo "Running app with API_KEY=$API_KEY..."
-python app.py --key "$API_KEY" &
-
 # Run the test script
 sleep 1
 echo "Running the 'consume_api.py' script"
