@@ -8,7 +8,7 @@ jobs:
     name: Run mypy and pylint
     runs-on: ubuntu-latest
     env:
-      TMDB_ACCESS_TOKEN: ${{ secrets.TMDB_ACCESS_TOKEN }}
+      API_KEY: ${{ secrets.API_KEY }}
       TMDB_ACCOUNT_ID: ${{ secrets.TMDB_ACCOUNT_ID }}
     steps:
       - name: Checkout repository
@@ -37,3 +37,54 @@ jobs:
         run: |
           pytest tests/
         working-directory: api
+
+  run_api:
+    runs-on: ubuntu-latest
+    env:
+      API_KEY: ${{ secrets.API_KEY }}
+      TMDB_ACCOUNT_ID: ${{ secrets.TMDB_ACCOUNT_ID }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+      - name: run_api.sh
+        run: |
+          ./run_api.sh
+
+  run_full_project:
+    runs-on: ubuntu-latest
+    env:
+      API_KEY: ${{ secrets.API_KEY }}
+      TMDB_ACCOUNT_ID: ${{ secrets.TMDB_ACCOUNT_ID }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+      - name: run_api.sh
+        run: |
+          ./run_full_project.sh
+
+  run_script:
+    runs-on: ubuntu-latest
+    env:
+      API_KEY: ${{ secrets.API_KEY }}
+      TMDB_ACCOUNT_ID: ${{ secrets.TMDB_ACCOUNT_ID }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+      - name: run_api.sh
+        run: |
+          ./run_script.sh

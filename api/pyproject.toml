@@ -45,6 +45,10 @@ ignore_errors = true
 module = "src.routes.*"  # Ignore the src/routes directory because of the flask-restx decorators
 ignore_errors = true
 
+[[tool.mypy.overrides]]
+module = "src.error_handlers.*"
+ignore_errors = true
+
 ########################################################################################################################
 # Pytest configuration
 ########################################################################################################################

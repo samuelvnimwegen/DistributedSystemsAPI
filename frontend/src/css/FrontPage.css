@@ -90,7 +90,7 @@
 body {
   margin: 0;
   padding: 0;
-  background-image: url('src/assets/absolute_cinema.jpg');
+  background-image: url('../assets/absolute_cinema.jpg');
   background-size: cover;
   background-repeat: repeat;
   background-position: center;

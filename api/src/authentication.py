@@ -31,7 +31,8 @@ def add_user_lookup_callback(jwt: JWTManager) -> None:
     @jwt.user_lookup_loader
     def user_lookup_loader(_jwt_header: dict[str, str], jwt_data: dict[str, str]) -> Optional[User]:
         identity = jwt_data["sub"]
-        return db.session.query(User).filter(User.user_id == int(identity)).first()
+        user: Optional[User] = db.session.query(User).filter(User.user_id == int(identity)).first()
+        return user
 
 
 def add_cookie_refresher(app: Flask) -> None:

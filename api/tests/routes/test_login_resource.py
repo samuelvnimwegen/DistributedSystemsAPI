@@ -11,7 +11,7 @@ def test_login_resource(no_cookie_client):
     """
     # Test that we cannot access the movies api without a JWT cookie
     response = no_cookie_client.get(
-        "api/movies",
+        "api/movies/favorite/324544",
     )
     assert response.status_code == 401
 
@@ -28,7 +28,7 @@ def test_login_resource(no_cookie_client):
 
     # Test that you can access the movies api
     response = no_cookie_client.get(
-        "api/movies",
+        "api/movies/favorite/324544",
     )
     assert response.status_code == 200
 
@@ -45,6 +45,6 @@ def test_login_resource(no_cookie_client):
 
     # Test that you can still access the movies api
     response = no_cookie_client.get(
-        "api/movies",
+        "api/movies/favorite/324544",
     )
     assert response.status_code == 200

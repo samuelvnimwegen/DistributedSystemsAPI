@@ -13,11 +13,11 @@ from src.routes.quickchart import QuickChartDataItem, create_quickchart_config
 from src.cache import cache
 from src.limiter import limiter
 
-TMDB_ACCESS_TOKEN = os.getenv("TMDB_ACCESS_TOKEN")
+API_KEY = os.getenv("API_KEY")
 TMDB_ACCOUNT_ID = os.getenv("TMDB_ACCOUNT_ID")
 
 API_HEADERS = {
-    "Authorization": f"Bearer {TMDB_ACCESS_TOKEN}",
+    "Authorization": f"Bearer {API_KEY}",
     "Accept": "application/json"
 }
 
@@ -121,7 +121,7 @@ class PopularMoviesResource(Resource):
             movies_api.abort(400, f"Minimum amount allowed amount is {1}.")
 
         headers = {
-            "Authorization": f"Bearer {TMDB_ACCESS_TOKEN}",
+            "Authorization": f"Bearer {API_KEY}",
             "Accept": "application/json"
         }
         params = {
@@ -178,6 +178,7 @@ class SameGenresResource(Resource):
     """
 
     @movies_api.marshal_with(movie_list_model)
+    @jwt_required()
     @cache.cached()
     def get(self, movie_id):
         """
@@ -216,13 +217,14 @@ class SimilarRuntimeResource(Resource):
     """
 
     @movies_api.marshal_with(movie_list_model)
+    @jwt_required()
     @cache.cached()
     def get(self, movie_id):
         """
         Get a list of movies with the same runtime (+- 10 minutes)
         """
         headers = {
-            "Authorization": f"Bearer {TMDB_ACCESS_TOKEN}",
+            "Authorization": f"Bearer {API_KEY}",
             "Accept": "application/json"
         }
 
@@ -258,6 +260,7 @@ class ScorePlotResource(Resource):
     """
 
     @movies_api.expect(score_plot_parser)
+    @jwt_required()
     @cache.cached(query_string=True)
     def get(self):
         """
@@ -309,13 +312,13 @@ class ScorePlotResource(Resource):
         )
 
 
-@movies_api.route('/favorite/<int:movie_id>', methods=['POST', 'DELETE', 'GET'])
+@movies_api.route('/favorite/<int:movie_id>')
 class ChangeFavoriteResource(Resource):
     """
     Resource for changing the favorite status of a movie.
     """
 
-    @movies_api.doc(params={"movie_id": "The ID of the movie to add to favorites."})
+    @jwt_required()
     def post(self, movie_id):
         """
         Add a movie to the favorite list.
@@ -340,7 +343,7 @@ class ChangeFavoriteResource(Resource):
 
         return {"message": "Movie added to favorites."}
 
-    @movies_api.doc(params={"movie_id": "The ID of the movie to remove from favorites."})
+    @jwt_required()
     def delete(self, movie_id):
         """
         Remove a movie from the favorite list.
@@ -367,6 +370,7 @@ class ChangeFavoriteResource(Resource):
 
     @movies_api.doc(params={"movie_id": "The ID of the movie to check if it's a favorite."})
     @movies_api.marshal_with(is_favorite_model)
+    @jwt_required()
     def get(self, movie_id):
         """
         Get the favorite status of a movie. This is whether the movie is in the favorite list or not.
@@ -395,6 +399,7 @@ class GetFavoriteMoviesResource(Resource):
     """
 
     @movies_api.marshal_with(movie_list_model)
+    @jwt_required()
     def get(self):
         """
         Get the favorite movies of a user.

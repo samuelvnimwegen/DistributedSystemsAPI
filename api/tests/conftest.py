@@ -4,22 +4,18 @@ The fixtures are used to create a test database and provide an SQLAlchemy sessio
 
 Disclaimer: This is based on our bachelor eindwerk project setup, which I also largely contributed to.
 """
-import os
-
 from pytest_postgresql import factories
 from pytest_postgresql.janitor import DatabaseJanitor
 import pytest
 from sqlalchemy import text
 from flask import current_app
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, get_csrf_token
 
 from src.config import APIConfig, LoggingConfig, DBConfig, LogLevel
 from src.app import create_app
 from src.database import db
 from src.database.models import User
 
-TMDB_ACCESS_TOKEN = os.getenv("TMDB_ACCESS_TOKEN")
-TMDB_ACCOUNT_ID = os.getenv("TMDB_ACCOUNT_ID")
 
 test_db = factories.postgresql_proc(port=None, dbname="test_db")
 
@@ -111,17 +107,6 @@ def no_cookie_client(app, db_session):  # pylint: disable=unused-argument
         return client
 
 
-@pytest.fixture(scope="session")
-def auth_headers() -> dict[str, str]:
-    """
-    This fixture returns authentication headers for the test client.
-    """
-    return {
-        "Authorization": f"Bearer {TMDB_ACCESS_TOKEN}",
-        "Accept": "application/json"
-    }
-
-
 def __create_user() -> User:
     """
     This function creates a test user in the database.
@@ -157,5 +142,18 @@ def __add_jwt_cookie(client, user: User) -> str:
         domain='localhost',
         path=current_app.config['JWT_ACCESS_COOKIE_PATH'],
     )
+
+    # Set CSRF token as cookie (Flask-JWT-Extended expects this)
+    csrf_token = get_csrf_token(token)
+    client.set_cookie(
+        key='csrf_access_token',
+        value=csrf_token,
+        max_age=current_app.config['JWT_ACCESS_TOKEN_EXPIRES'],
+        secure=current_app.config.get('JWT_COOKIE_SECURE', False),
+        httponly=False,  # CSRF cookie must be readable by JS/requests
+        samesite='Lax',
+        path=current_app.config.get('JWT_ACCESS_CSRF_COOKIE_PATH', '/'),
+    )
+    client.csrf_token = csrf_token
 
     return token

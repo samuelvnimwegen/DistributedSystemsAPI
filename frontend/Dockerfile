@@ -1,5 +1,5 @@
-# Use official Node image
-FROM node:18
+# Stage 1: Build the frontend using Node.js
+FROM node:18 as build
 
 # Set working directory
 WORKDIR /app

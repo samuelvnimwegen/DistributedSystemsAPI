@@ -210,56 +210,58 @@ def test_get_score_plot_no_movie_ids(client):
     assert response.status_code == 400, f"Expected status code 400, got {response.status_code}"
 
 
-def test_add_and_remove_favorite_movie(client, auth_headers):
+def test_add_and_remove_favorite_movie(client):
     """
     Test the /add-favorite route.
     """
     # Test with invalid movie ID
-    response = client.post(f"/api/movies/favorite/{0}", headers=auth_headers)
+    # Make an auth header:
+    headers = {"X-CSRF-TOKEN": client.csrf_token}
+    response = client.post(f"/api/movies/favorite/{0}", headers=headers)
     assert response.status_code == 404
 
     # Test by adding the minecraft movie to favorites
-    response = client.get(f"/api/movies/favorite/{950387}", headers=auth_headers)
+    response = client.get(f"/api/movies/favorite/{950387}")
     assert isinstance(response.json["is_favorite"], bool)
     in_favorites = response.json["is_favorite"]
     assert response.status_code == 200
 
     # If it is in favorites, remove it
     if in_favorites:
-        response = client.delete(f"/api/movies/favorite/{950387}", headers=auth_headers)
+        response = client.delete(f"/api/movies/favorite/{950387}", headers=headers)
         assert response.status_code == 200
         assert response.json == {"message": "Movie removed from favorites."}
 
     # Test whether the movie is not in favorites
-    response = client.get("/api/movies/favorite", headers=auth_headers)
+    response = client.get("/api/movies/favorite")
     assert response.status_code == 200
     assert "results" in response.json
     assert isinstance(response.json["results"], list)
     assert not any(movie["id"] == 950387 for movie in response.json["results"])
 
     # Test adding the movie to favorites (the minecraft movie)
-    response = client.post(f"/api/movies/favorite/{950387}", headers=auth_headers)
+    response = client.post(f"/api/movies/favorite/{950387}", headers=headers)
     assert response.status_code == 200
     assert response.json == {"message": "Movie added to favorites."}
 
     # Test whether the movie is in favorites
-    response = client.get("/api/movies/favorite", headers=auth_headers)
+    response = client.get("/api/movies/favorite")
     assert response.status_code == 200
     assert "results" in response.json
     assert isinstance(response.json["results"], list)
     assert any(movie["id"] == 950387 for movie in response.json["results"])
 
     # Test whether the movie is in favorites
-    response = client.get(f"/api/movies/favorite/{950387}", headers=auth_headers)
+    response = client.get(f"/api/movies/favorite/{950387}")
     assert response.json["is_favorite"] is True
 
     # Test removing the movie from favorites
-    response = client.delete(f"/api/movies/favorite/{950387}", headers=auth_headers)
+    response = client.delete(f"/api/movies/favorite/{950387}", headers=headers)
     assert response.status_code == 200
     assert response.json == {"message": "Movie removed from favorites."}
 
     # Test whether the movie is not in favorites
-    response = client.get("/api/movies/favorite", headers=auth_headers)
+    response = client.get("/api/movies/favorite")
     assert response.status_code == 200
     assert "results" in response.json
     assert isinstance(response.json["results"], list)
@@ -267,22 +269,22 @@ def test_add_and_remove_favorite_movie(client, auth_headers):
 
     # Add it back to favorites if it was there before
     if in_favorites:
-        response = client.post(f"/api/movies/favorite/{950387}", headers=auth_headers)
+        response = client.post(f"/api/movies/favorite/{950387}", headers=headers)
         assert response.status_code == 200
         assert response.json == {"message": "Movie added to favorites."}
 
 
-def test_get_movie_by_id(client, auth_headers):
+def test_get_movie_by_id(client):
     """
     Test the /movie/{movie_id} route.
     """
     # Test with invalid movie ID
-    response = client.get(f"/api/movies/{0}", headers=auth_headers)
+    response = client.get(f"/api/movies/{0}")
     assert response.status_code == 404
 
     # Test with valid movie ID (the minecraft movie)
     mc_movie_id = 950387
-    response = client.get(f"/api/movies/{mc_movie_id}", headers=auth_headers)
+    response = client.get(f"/api/movies/{mc_movie_id}")
     assert response.status_code == 200
     assert "id" in response.json
     assert "title" in response.json
@@ -305,10 +307,10 @@ def test_get_movie_by_id(client, auth_headers):
     assert isinstance(response.json["vote_count"], int)
 
 
-def test_get_movie_by_id_invalid(client, auth_headers):
+def test_get_movie_by_id_invalid(client):
     """
     Test the /movie/{movie_id} route with an invalid movie ID.
     """
     # Test with invalid movie ID
-    response = client.get(f"/api/movies/{0}", headers=auth_headers)
+    response = client.get(f"/api/movies/{0}")
     assert response.status_code == 404

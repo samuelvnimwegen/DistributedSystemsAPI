@@ -7,12 +7,11 @@ def test_logout_resource(client):
     """
     Test the logout resource.
     :param client: The Flask test client with a JWT cookie
-    :param db_session: The database session fixture
     :return: None
     """
     # Test that we can access the movies api with a JWT cookie
     response = client.get(
-        "api/movies",
+        "api/movies/favorite/324544",
     )
     assert response.status_code == 200
 
@@ -25,6 +24,6 @@ def test_logout_resource(client):
 
     # Test that we cannot access the movies api without a JWT cookie
     response = client.get(
-        "api/movies",
+        "api/movies/favorite/324544",
     )
     assert response.status_code == 401

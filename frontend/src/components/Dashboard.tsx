@@ -50,6 +50,13 @@ const Dashboard: React.FC = () => {
         fetchMovies();
     }, []);
 
+    function getCookie(name: string): string | null {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop()?.split(';')?.shift() ?? null;
+        return null;
+    }
+
     // Get the users favorite movies:
     const fetchFavoriteMovies = async () => {
         try {
@@ -109,12 +116,14 @@ const Dashboard: React.FC = () => {
                 }
                 return newSet;
             });
-
+            const csrfToken = getCookie('csrf_access_token');
+            const headers: Record<string, string> = {
+                'Content-Type': 'application/json',
+                ...(csrfToken ? {'X-CSRF-TOKEN': csrfToken} : {}),
+            };
             const response = await fetch(`/api/movies/favorite/${id}`, {
                 method: isFavorite ? 'DELETE' : 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: headers
             });
 
             await fetchFavoriteMovies(); // <-- refresh after change

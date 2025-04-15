@@ -167,7 +167,7 @@ const MovieModal: React.FC<Props> = ({movie, onClose}) => {
                             className="modal-poster"
                         />
                         <div className="movie-details">
-                            <h2 className="movie-title">{movie.title}</h2>
+                            <h2 className="movie-title" style={{color: "darkblue"}}>{movie.title}</h2>
                             <p className="release-date">Release Date: <span>{movie.releaseDate}</span></p>
                             <p className="overview"><strong>Overview:</strong> {movieDetails?.overview}</p>
                             <p><strong>Original Language:</strong> {movieDetails?.original_language}</p>

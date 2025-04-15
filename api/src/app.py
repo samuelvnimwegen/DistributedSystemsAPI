@@ -45,6 +45,8 @@ def create_app(api_config: APIConfig) -> Flask:
     flask_app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
     flask_app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
     flask_app.config["JWT_COOKIE_SECURE"] = False
+    flask_app.config['JWT_ACCESS_COOKIE_PATH'] = '/'
+    flask_app.config['JWT_COOKIE_CSRF_PROTECT'] = True  # or False if you're testing without CSRF
     flask_app.config["SQLALCHEMY_DATABASE_URI"] = api_config.db.connection_url
     flask_app.config["SECRET_KEY"] = api_config.secret_key
     flask_app.config["DEBUG"] = api_config.debug
@@ -52,7 +54,7 @@ def create_app(api_config: APIConfig) -> Flask:
     CORS(flask_app, supports_credentials=True)
     db.init_app(flask_app)
     cache.init_app(flask_app)
-    # limiter.init_app(flask_app)
+    limiter.init_app(flask_app)
 
     # Initialize JWT Manager
     jwt = JWTManager(flask_app)

@@ -34,7 +34,7 @@ class User(Base):
         """
         return f"<User {self.username}>"
 
-    def __init__(self, username: str, password: str, is_active: bool = True, is_admin: bool = False):
+    def __init__(self, username: str, password: str, is_active: bool = True, is_admin: bool = False) -> None:
         """
         Initialize a new User instance.
 
@@ -63,4 +63,4 @@ class User(Base):
         :param password: The password to check.
         :return: True if the passwords match, False otherwise.
         """
-        return sha256(password.encode()).hexdigest() == self.password
+        return bool(sha256(password.encode()).hexdigest() == self.password)

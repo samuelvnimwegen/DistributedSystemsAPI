@@ -5,6 +5,8 @@ from flask import jsonify, Flask, Response
 from flask_jwt_extended import JWTManager
 from flask_jwt_extended.exceptions import NoAuthorizationError
 
+# pylint: disable=unused-argument
+# type: ignore
 
 def register_error_handlers(jwt_manager: JWTManager, flask_app: Flask) -> None:
     """
@@ -14,7 +16,7 @@ def register_error_handlers(jwt_manager: JWTManager, flask_app: Flask) -> None:
     :param flask_app: The Flask application instance
     """
     @jwt_manager.unauthorized_loader
-    def unauthorized_callback() -> tuple[Response, int]:
+    def unauthorized_callback(error) -> tuple[Response, int]:
         """
         Handle unauthorized requests.
         :return:
@@ -22,7 +24,7 @@ def register_error_handlers(jwt_manager: JWTManager, flask_app: Flask) -> None:
         return jsonify({"message": "Unauthorized"}), 401
 
     @jwt_manager.expired_token_loader
-    def expired_token_callback() -> tuple[Response, int]:
+    def expired_token_callback(error) -> tuple[Response, int]:
         """
         Handle expired tokens.
         :return:
@@ -30,7 +32,7 @@ def register_error_handlers(jwt_manager: JWTManager, flask_app: Flask) -> None:
         return jsonify({"message": "Expired token (log back in)"}), 401
 
     @jwt_manager.invalid_token_loader
-    def invalid_token_callback() -> tuple[Response, int]:
+    def invalid_token_callback(error) -> tuple[Response, int]:
         """
         Handle invalid tokens.
         :return:
@@ -38,7 +40,7 @@ def register_error_handlers(jwt_manager: JWTManager, flask_app: Flask) -> None:
         return jsonify({"message": "Invalid token (check format?)"}), 401
 
     @jwt_manager.token_verification_failed_loader
-    def token_verification_failed_callback() -> tuple[Response, int]:
+    def token_verification_failed_callback(error) -> tuple[Response, int]:
         """
         Handle token verification failures.
         :return:
@@ -46,7 +48,7 @@ def register_error_handlers(jwt_manager: JWTManager, flask_app: Flask) -> None:
         return jsonify({"message": "Token verification failed"}), 401
 
     @flask_app.errorhandler(NoAuthorizationError)
-    def handle_no_auth_error(error: NoAuthorizationError) -> tuple[Response, int]:  # pylint: disable=unused-argument
+    def handle_no_auth_error(error: NoAuthorizationError) -> tuple[Response, int]:
         """
         Handle missing authorization header errors.
         :return:
