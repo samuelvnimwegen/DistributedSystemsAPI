@@ -20,8 +20,8 @@ jobs:
           python-version: "3.12"
 
       - name: Print API key (for debugging — REMOVE in prod)
-        run:
-            echo "Key: $API_KEY"
+        run: |
+          echo "Key: $API_KEY"
 
       - name: Install dependencies
         run: |
