@@ -6,6 +6,29 @@ if [ -z "$API_KEY" ]; then
   exit 1
 fi
 
+# PostgreSQL connection info
+DB_NAME="ds_db"
+DB_USER="ds_user"
+DB_PASSWORD="password"
+DB_HOST="localhost"
+DB_PORT="5432"
+
+# Export password so psql can login non-interactively
+export PGPASSWORD=$DB_PASSWORD
+
+echo "Checking if database '$DB_NAME' exists..."
+
+# Try to create the database if it doesn't exist
+psql -U "$DB_USER" -h "$DB_HOST" -p "$DB_PORT" -tc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME'" | grep -q 1 || \
+psql -U "$DB_USER" -h "$DB_HOST" -p "$DB_PORT" -c "CREATE DATABASE \"$DB_NAME\""
+
+if [ $? -ne 0 ]; then
+  echo "❌ Failed to connect to PostgreSQL or create database."
+  exit 1
+fi
+
+echo "✅ Database checked/created."
+
 # Move into the api directory
 cd api || { echo "api directory not found"; exit 1; }
 
