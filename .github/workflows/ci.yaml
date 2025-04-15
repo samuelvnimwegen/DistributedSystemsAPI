@@ -86,6 +86,11 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install PostgreSQL client (psql)
+        run: |
+          sudo apt update
+          sudo apt install -y postgresql-client
+
       - name: run_api.sh
         run: |
           ./run_api.sh

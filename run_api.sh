@@ -26,8 +26,8 @@ export PGPASSWORD=$DB_PASSWORD
 echo "Checking if database '$DB_NAME' exists..."
 
 # Try to create the database if it doesn't exist
-psql -U "$DB_USER" -h "$DB_HOST" -p "$DB_PORT" -tc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME'" | grep -q 1 || \
-psql -U "$DB_USER" -h "$DB_HOST" -p "$DB_PORT" -c "CREATE DATABASE \"$DB_NAME\""
+psql -U "$DB_USER" -h "$DB_HOST" -p "$DB_PORT" -d "postgres" -tc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME'" | grep -q 1 || \
+psql -U "$DB_USER" -h "$DB_HOST" -p "$DB_PORT" -d "postgres" -c "CREATE DATABASE \"$DB_NAME\""
 
 if [ $? -ne 0 ]; then
   echo "❌ Failed to connect to PostgreSQL or create database."
