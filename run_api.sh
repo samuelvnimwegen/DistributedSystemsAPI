@@ -6,6 +6,13 @@ if [ -z "$API_KEY" ]; then
   exit 1
 fi
 
+# Check if PostgreSQL is installed
+if ! command -v psql &> /dev/null
+then
+  echo "❌ PostgreSQL is not installed. Please install PostgreSQL before proceeding."
+  exit 1
+fi
+
 # PostgreSQL connection info
 DB_NAME="ds_db"
 DB_USER="ds_user"
