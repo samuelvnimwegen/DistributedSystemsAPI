@@ -6,7 +6,7 @@ from PIL import Image
 from io import BytesIO
 from PIL import UnidentifiedImageError
 
-BASE_URL = "http://localhost:5000"
+BASE_URL = "http://localhost"
 
 session = requests.Session()
 CSFR_headers = {}
