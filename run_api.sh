@@ -2,7 +2,7 @@
 
 # Check if API_KEY is set via environment variable or passed as an argument
 if [ -z "$API_KEY" ]; then
-  echo "Error: API_KEY is not set. Please provide it either as an environment variable or as an argument. You can do this by entering 'EXPORT API_KEY='{API_KEY}' in your console."
+  echo "Error: API_KEY is not set. Please provide it either as an environment variable or as an argument. You can do this by entering 'export API_KEY='{API_KEY}' in your console."
   exit 1
 fi
 
@@ -24,6 +24,12 @@ DB_PORT="5432"
 export PGPASSWORD=$DB_PASSWORD
 
 echo "Checking if database '$DB_NAME' exists..."
+
+# Check if the user exists, create it if necessary
+sudo -u postgres psql -h "$DB_HOST" -p "$DB_PORT" -d "postgres" -c "ALTER USER \"$DB_USER\" CREATEDB;"
+sudo -u postgres psql -h "$DB_HOST" -p "$DB_PORT" -d "postgres" -tc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'" | grep -q 1 || \
+sudo -u postgres psql -h "$DB_HOST" -p "$DB_PORT" -d "postgres" -c "CREATE USER \"$DB_USER\" WITH PASSWORD '$DB_PASSWORD';"
+
 
 # Try to create the database if it doesn't exist
 psql -U "$DB_USER" -h "$DB_HOST" -p "$DB_PORT" -d "postgres" -tc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME'" | grep -q 1 || \
