@@ -8,8 +8,8 @@ jobs:
     name: Run mypy and pylint
     runs-on: ubuntu-latest
     env:
-      API_KEY: ${{ secrets.API_KEY }}
-      TMDB_ACCOUNT_ID: ${{ secrets.TMDB_ACCOUNT_ID }}
+      API_KEY: ${{ vars.API_KEY }}
+      TMDB_ACCOUNT_ID: ${{ vars.TMDB_ACCOUNT_ID }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
