@@ -1,8 +1,7 @@
-
-from typing import TYPE_CHECKING
-from sqlalchemy import Column, ForeignKey, DateTime
-from sqlalchemy.orm import relationship, Mapped, mapped_column
 from datetime import datetime
+from typing import TYPE_CHECKING
+from sqlalchemy import ForeignKey, DateTime
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 from src.database.base import Base
 
 if TYPE_CHECKING:
@@ -23,8 +22,12 @@ class WatchedMovie(Base):
     watched_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
     """The date and time when the movie was watched."""
 
-    user: Mapped["User"] = relationship("User", back_populates="watched_movie_associations", overlaps="watched_movies,users_watched")
+    user: Mapped["User"] = relationship(
+        "User", back_populates="watched_movie_associations", overlaps="watched_movies,users_watched"
+    )
     """The user who watched the movie."""
 
-    movie: Mapped["Movie"] = relationship("Movie", back_populates="watched_movie_associations", overlaps="watched_movies,users_watched")
+    movie: Mapped["Movie"] = relationship(
+        "Movie", back_populates="watched_movie_associations", overlaps="watched_movies,users_watched"
+    )
     """The movie that was watched."""

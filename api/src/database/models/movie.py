@@ -2,6 +2,7 @@
 This module contains the Movie model for the database.
 """
 from typing import TYPE_CHECKING, Optional
+from collections import Counter
 from sqlalchemy.orm import relationship, mapped_column, Mapped, Session
 from sqlalchemy import Table, Column, ForeignKey
 from src.database.base import Base
@@ -126,8 +127,7 @@ class Movie(Base):
         friends = user.get_friends()
 
         # Get movie_ids watched by friends
-        from collections import Counter
-        movie_counter = Counter()
+        movie_counter: Counter[int] = Counter()
 
         for friend in friends:
             movie_counter.update(movie.movie_id for movie in friend.watched_movies)

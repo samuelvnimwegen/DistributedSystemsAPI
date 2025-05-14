@@ -1,12 +1,10 @@
 """
 This module defines the Rating Review model for the application.
 """
-
-
+from typing import TYPE_CHECKING
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import ForeignKey
 from src.database.base import Base
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from src.database.models import User, Rating
@@ -53,4 +51,3 @@ class RatingReview(Base):
         self.user_id = user_id
         self.rating_id = rating_id
         self.agreed = agreed
-

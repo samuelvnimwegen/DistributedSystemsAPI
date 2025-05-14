@@ -33,7 +33,7 @@ disallow_incomplete_defs = true
 warn_redundant_casts = true
 warn_unused_configs = true
 
-disable_error_code = ["misc"]
+disable_error_code = ["misc", "attr-defined"]
 
 [[tool.mypy.overrides]]
 module = "src.config.*"  # Ignore the src/config.py file

@@ -17,10 +17,8 @@ friends_with_association = Table(
     Column("user2_id", ForeignKey("users.user_id")),
 )
 
-
 if TYPE_CHECKING:
     from src.database.models import Rating, RatingReview, Movie, WatchedMovie
-
 
 
 class User(Base):
@@ -133,3 +131,19 @@ class User(Base):
         :return: True if the passwords match, False otherwise.
         """
         return bool(sha256(password.encode()).hexdigest() == self.password)
+
+    def get_latest_watched_by_friends(self, amount: int = 10) -> list["WatchedMovie"]:
+        """
+        Get the latest watched movies by friends.
+        """
+        # Get all watched movies by friends
+        friends = self.get_friends()
+        associations: list["WatchedMovie"] = []
+        for friend in friends:
+            associations.extend(friend.watched_movie_associations)
+
+        # Sort by watched_at date
+        associations.sort(key=lambda m: m.watched_at, reverse=True)
+
+        # Limit to the specified amount
+        return associations[:amount]
