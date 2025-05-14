@@ -2,8 +2,11 @@
 Test cases for the User model in the database.
 """
 import pytest
+
+from src.database import Movie
 from src.database.models.user import User
 from sqlalchemy.orm import Session
+
 
 def test_add_and_get_friends(db_session: Session):
     """
@@ -20,6 +23,7 @@ def test_add_and_get_friends(db_session: Session):
 
     assert user2 in user1.get_friends()
     assert user1 in user2.get_friends()
+
 
 def test_remove_friend(db_session: Session):
     """
@@ -43,6 +47,7 @@ def test_remove_friend(db_session: Session):
     assert user1 not in user2.get_friends()
     assert user2 not in user1.get_friends()
 
+
 def test_add_self_as_friend_raises(db_session: Session):
     """
     Test that adding oneself as a friend raises an AssertionError.
@@ -53,6 +58,7 @@ def test_add_self_as_friend_raises(db_session: Session):
 
     with pytest.raises(AssertionError):
         user.add_friend(user)
+
 
 def test_friend_type_check_raises(db_session: Session):
     """
@@ -68,6 +74,7 @@ def test_friend_type_check_raises(db_session: Session):
     with pytest.raises(AssertionError):
         user.remove_friend("not-a-user")
 
+
 def test_check_password():
     """
     Test the check_password method of the User class.
@@ -76,3 +83,35 @@ def test_check_password():
     assert user.check_password("mypass")
     assert not user.check_password("wrongpass")
 
+
+def test_users_watched_relationship(db_session):
+    """
+    Test the relationship between User and Movie through the users_watched association table.
+    """
+    # Create a user and a movie
+    user = User(username="alice", password="secure")
+    movie = Movie(
+        movie_name="The Matrix",
+        rating=8.7,
+        runtime=136,
+        meta_score=73,
+        plot="A computer hacker learns about the true nature of reality."
+    )
+
+    # Set up relationship
+    movie.users_watched.append(user)
+    db_session.add_all([user, movie])
+    db_session.commit()
+
+    # Refresh and assert
+    db_session.refresh(movie)
+    db_session.refresh(user)
+
+    assert user in movie.users_watched
+    assert movie in user.watched_movies
+    assert len(user.watched_movie_associations) == 1
+    assert len(movie.users_watched) == 1
+    assert len(user.watched_movies) == 1
+    assert len(user.watched_movie_associations) == 1
+    assert user.watched_movie_associations[0].movie_id == movie.movie_id
+    assert user.watched_movie_associations[0].watched_at is not None

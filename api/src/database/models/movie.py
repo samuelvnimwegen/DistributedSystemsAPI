@@ -2,12 +2,12 @@
 This module contains the Movie model for the database.
 """
 from typing import TYPE_CHECKING, Optional
-from sqlalchemy.orm import relationship, mapped_column, Mapped
+from sqlalchemy.orm import relationship, mapped_column, Mapped, Session
 from sqlalchemy import Table, Column, ForeignKey
 from src.database.base import Base
 
 if TYPE_CHECKING:
-    from src.database.models.genre import Genre
+    from src.database.models import Genre, Rating, User, WatchedMovie
 
 movie_genre_association = Table(
     "has_genre",
@@ -42,6 +42,21 @@ class Movie(Base):
 
     plot: Mapped[str]
     """The plot of the movie."""
+
+    ratings: Mapped[list["Rating"]] = relationship(back_populates="movie")
+    """The list of ratings associated with the movie."""
+
+    users_watched: Mapped[list["User"]] = relationship(
+        "User",
+        secondary="watched_movie",
+        back_populates="watched_movies"
+    )
+    """The list of users who have watched the movie."""
+
+    watched_movie_associations: Mapped[list["WatchedMovie"]] = relationship(
+        back_populates="movie", overlaps="users_watched,watched_movies"
+    )
+    """The list of watched movie associations."""
 
     def __init__(
         self,
@@ -87,3 +102,53 @@ class Movie(Base):
         """
         return (f"<Movie(movie_id={self.movie_id}, movie_name='{self.movie_name}', rating={self.rating}, "
                 f"runtime={self.runtime})>")
+
+    @staticmethod
+    def get_recommended_movies_by_rating(db_session: Session, amount: int = 10) -> list["Movie"]:
+        """
+        Get recommended movies based on the average rating of all movies.
+        :param db_session: The database session.
+        :param amount: The number of recommended movies to return.
+        :return: List of recommended movies.
+        """
+        recommended_movies = db_session.query(Movie).order_by(Movie.rating.desc()).limit(amount).all()
+        return recommended_movies
+
+    @staticmethod
+    def get_recommended_movies_by_friends(user: "User", db_session: Session, amount: int = 10) -> list["Movie"]:
+        """
+        Get recommended movies based on which movies friends have watched.
+        :param user: The User instance.
+        :param db_session: The database session.
+        :param amount: The number of recommended movies to return.
+        :return: List of recommended movies.
+        """
+        friends = user.get_friends()
+
+        # Get movie_ids watched by friends
+        from collections import Counter
+        movie_counter = Counter()
+
+        for friend in friends:
+            movie_counter.update(movie.movie_id for movie in friend.watched_movies)
+
+        # Exclude movies already watched by the user
+        watched_movie_ids = {movie.movie_id for movie in user.watched_movies}
+        candidate_ids = [movie_id for movie_id, _ in movie_counter.most_common() if movie_id not in watched_movie_ids]
+
+        if not candidate_ids:
+            return []
+
+        result_amount = min(amount, len(candidate_ids))
+
+        # Query top N recommended movies in a single query
+        recommended_movies = (
+            db_session.query(Movie)
+            .filter(Movie.movie_id.in_(candidate_ids))
+            .all()
+        )
+
+        # Maintain ordering based on friend popularity
+        recommended_movies.sort(key=lambda m: movie_counter[m.movie_id], reverse=True)
+
+        return recommended_movies[:result_amount]

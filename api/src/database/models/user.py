@@ -1,9 +1,11 @@
 """
 This module defines the User model for the application.
 """
+from typing import TYPE_CHECKING
 from hashlib import sha256
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import Table, Column, ForeignKey
+
 from src.database.base import Base
 
 # pylint: disable=protected-access
@@ -14,6 +16,11 @@ friends_with_association = Table(
     Column("user1_id", ForeignKey("users.user_id")),
     Column("user2_id", ForeignKey("users.user_id")),
 )
+
+
+if TYPE_CHECKING:
+    from src.database.models import Rating, RatingReview, Movie, WatchedMovie
+
 
 
 class User(Base):
@@ -45,6 +52,22 @@ class User(Base):
     )
     """The list of friends associated with the user."""
 
+    ratings: Mapped[list["Rating"]] = relationship(back_populates="user")
+    """The list of ratings associated with the user."""
+
+    rating_reviews: Mapped[list["RatingReview"]] = relationship(back_populates="user")
+    """The list of rating reviews associated with the user."""
+
+    watched_movies: Mapped[list["Movie"]] = relationship(
+        secondary="watched_movie",
+        back_populates="users_watched",
+    )
+    """The list of movies watched by the user."""
+
+    watched_movie_associations: Mapped[list["WatchedMovie"]] = relationship(
+        back_populates="user", overlaps="users_watched,watched_movies"
+    )
+    """The list of watched movie associations for the user."""
 
     def get_friends(self) -> list["User"]:
         """
@@ -72,7 +95,6 @@ class User(Base):
         assert friend.user_id != self.user_id, "Cannot remove oneself as a friend"
         self._friends.remove(friend)
         friend._friends.remove(self)
-
 
     def __repr__(self) -> str:
         """
