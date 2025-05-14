@@ -33,7 +33,6 @@ def create_app(api_config: APIConfig) -> Flask:
     Disclaimer: This is a commonly used setup for Flask applications, it could be used in other projects as well.
     :param api_config: The configuration to use
     """
-    assert os.getenv("API_KEY") is not None, "API_KEY not loaded correctly"
     logging.basicConfig(
         level=api_config.logging.get_level(),
         format=api_config.logging.format,

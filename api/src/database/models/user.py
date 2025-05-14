@@ -2,8 +2,18 @@
 This module defines the User model for the application.
 """
 from hashlib import sha256
-from sqlalchemy.orm import mapped_column, Mapped
+from sqlalchemy.orm import mapped_column, Mapped, relationship
+from sqlalchemy import Table, Column, ForeignKey
 from src.database.base import Base
+
+# pylint: disable=protected-access
+
+friends_with_association = Table(
+    "friends_with",
+    Base.metadata,
+    Column("user1_id", ForeignKey("users.user_id")),
+    Column("user2_id", ForeignKey("users.user_id")),
+)
 
 
 class User(Base):
@@ -26,6 +36,43 @@ class User(Base):
 
     is_admin: Mapped[bool] = mapped_column(default=False)
     """Indicates if the user is an admin."""
+
+    _friends: Mapped[list["User"]] = relationship(
+        "User",
+        secondary=friends_with_association,
+        primaryjoin=(user_id == friends_with_association.c.user1_id),
+        secondaryjoin=(user_id == friends_with_association.c.user2_id),
+    )
+    """The list of friends associated with the user."""
+
+
+    def get_friends(self) -> list["User"]:
+        """
+        Get the list of friends associated with the user.
+        :return: List of friends.
+        """
+        return self._friends
+
+    def add_friend(self, friend: "User") -> None:
+        """
+        Add a friend to the user.
+        :param friend: The User instance to add as a friend.
+        """
+        assert isinstance(friend, User), "friend must be a User instance"
+        assert friend.user_id != self.user_id, "Cannot add oneself as a friend"
+        self._friends.append(friend)
+        friend._friends.append(self)
+
+    def remove_friend(self, friend: "User") -> None:
+        """
+        Remove a friend from the user.
+        :param friend: The User instance to remove from friends.
+        """
+        assert isinstance(friend, User), "friend must be a User instance"
+        assert friend.user_id != self.user_id, "Cannot remove oneself as a friend"
+        self._friends.remove(friend)
+        friend._friends.remove(self)
+
 
     def __repr__(self) -> str:
         """
