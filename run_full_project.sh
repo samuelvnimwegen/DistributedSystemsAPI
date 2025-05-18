@@ -7,7 +7,7 @@ if [ -z "$API_KEY" ]; then
 fi
 
 # Stop and remove existing containers
-docker-compose down
+docker-compose down  --remove-orphans
 
 # Build the containers and pass the API_KEY build argument
 docker-compose build --build-arg API_KEY=$API_KEY

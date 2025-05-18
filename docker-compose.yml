@@ -1,29 +1,62 @@
 services:
-  api:
-    build: ./api
+  movie_api:
+    build: movie_api
     ports:
-      - "5000:5000"  # localhost:8000 → container:8000
+      - "5000:5000"
     networks:
       - app-network
     depends_on:
-      db:
+      movie_db:
+        condition: service_healthy
+
+  logging_api:
+    build: logging_api
+    ports:
+      - "5001:5001"
+    networks:
+      - app-network
+    depends_on:
+      logging_db:
+        condition: service_healthy
+
+  rating_api:
+    build: rating_api
+    ports:
+      - "5002:5002"
+    networks:
+      - app-network
+    depends_on:
+      rating_db:
+        condition: service_healthy
+
+  user_api:
+    build: user_api
+    ports:
+      - "5003:5003"
+    networks:
+      - app-network
+    depends_on:
+      user_db:
         condition: service_healthy
 
   frontend:
     build: ./frontend
     ports:
-      - "5173:5173"  # localhost:5173 → container:5173
+      - "5173:5173"
     depends_on:
-      - api
+      - movie_api
+      - logging_api
+      - rating_api
+      - user_api
     networks:
       - app-network
     volumes:
-      - ./frontend:/app  # <-- bind mount your code
-      - /app/node_modules  # <-- ignore host node_modules to avoid conflicts
+      - ./frontend:/app
+      - /app/node_modules
     command: npm run dev
     working_dir: /app
     environment:
-      - CHOKIDAR_USEPOLLING=true  # for hot reloading in Docker
+      - CHOKIDAR_USEPOLLING=true
 
   nginx:
     image: nginx:alpine
@@ -34,33 +67,102 @@ services:
       - ./frontend/dist:/usr/share/nginx/html
     depends_on:
       - frontend
-      - api
+      - logging_api
+      - movie_api
+      - rating_api
+      - user_api
     networks:
       - app-network
 
-  db:
+  movie_db:
     image: postgres:17-alpine
-    container_name: postgres-db
+    container_name: movie_db
     restart: always
     environment:
       POSTGRES_USER: ds_user
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: ds_db
+      POSTGRES_DB: movie_db
     volumes:
-      - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+      - movie_pgdata:/var/lib/postgresql/data
     networks:
-        - app-network
+      - app-network
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "ds_user", "-d", "ds_db"]
+      test: ["CMD", "pg_isready", "-U", "ds_user", "-d", "movie_db"]
       interval: 10s
       retries: 5
       start_period: 30s
       timeout: 10s
+    ports:
+        - "5433:5432" # Expose Postgres to the host machine for debugging purposes
+
+  logging_db:
+    image: postgres:17-alpine
+    container_name: logging_db
+    restart: always
+    environment:
+      POSTGRES_USER: ds_user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: logging_db
+    volumes:
+      - logging_pgdata:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "ds_user", "-d", "logging_db"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    ports:
+      - "5434:5432" # Expose Postgres to the host machine for debugging purposes
+
+  rating_db:
+    image: postgres:17-alpine
+    container_name: rating_db
+    restart: always
+    environment:
+      POSTGRES_USER: ds_user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: rating_db
+    volumes:
+      - rating_pgdata:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "ds_user", "-d", "rating_db"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    ports:
+      - "5435:5432" # Expose Postgres to the host machine for debugging purposes
+
+  user_db:
+    image: postgres:17-alpine
+    container_name: user_db
+    restart: always
+    environment:
+      POSTGRES_USER: ds_user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: user_db
+    volumes:
+      - user_pgdata:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "ds_user", "-d", "user_db"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    ports:
+      - "5436:5432" # Expose Postgres to the host machine for debugging purposes
 
 volumes:
-  pgdata:
+  user_pgdata:
+  rating_pgdata:
+  logging_pgdata:
+  movie_pgdata:
 
 networks:
   app-network:
