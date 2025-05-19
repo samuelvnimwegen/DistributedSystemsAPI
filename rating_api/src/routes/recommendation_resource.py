@@ -75,9 +75,12 @@ class FriendsRecommendationResource(Resource):
         friends = response.json().get("results", [])
         friend_ids = [friend["user_id"] for friend in friends]
 
+        if not friend_ids:
+            return {"results": []}, 200
+
         # Get the movies that friends watched
         response = requests.get(
-            "http://logging_api:5001/api/logging/",
+            "http://logging_api:5001/api/logging/watched",
             cookies={"access_token_cookie": request.cookies.get("access_token_cookie")},
             params={"user_id": friend_ids},
             timeout=5,
