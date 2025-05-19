@@ -2,7 +2,7 @@
 Test cases for the rating resource API endpoints.
 """
 from unittest.mock import patch
-from src.database import Rating
+from src.database import Rating, RatingReview
 
 
 @patch("requests.get")
@@ -106,3 +106,127 @@ def test_get_friend_ratings_success(mock_get, client, db_session):
     data = response.get_json()
     assert "results" in data
     assert any(r["movie_id"] == 42 for r in data["results"])
+
+
+def create_rating(db_session, user_id, movie_id=42):
+    rating = Rating(user_id=user_id, movie_id=movie_id, rating=4.0, review="Great movie!")
+    db_session.add(rating)
+    db_session.commit()
+
+
+@patch("src.routes.ratings_resource.requests.get")
+def test_get_friends_movies(mock_get, client, db_session):
+    """
+    Test case for getting movies rated by friends.
+    """
+    # Mock /api/users/friends
+    mock_get.side_effect = [
+        MockResponse({"results": [{"user_id": 1}, {"user_id": 2}]}),
+        MockResponse({"results": [{"movie_id": 42, "title": "Inception"}]})
+    ]
+
+    create_rating(db_session, user_id=1)
+    create_rating(db_session, user_id=2)
+
+    response = client.get("/api/preference/rating/friends/movies")
+    assert response.status_code == 200
+    assert "results" in response.json
+
+
+@patch("src.routes.ratings_resource.requests.get")
+def test_get_friend_movies_by_id(mock_get, client, db_session):
+    """
+    Test case for getting movies rated by a specific friend.
+    """
+    create_rating(db_session, user_id=1)
+
+    # Mock call to movie_api
+    mock_get.return_value = MockResponse({"results": [{"movie_id": 42, "title": "Interstellar"}]})
+
+    response = client.get("/api/preference/rating/friends/movies/1")
+    assert response.status_code == 200
+    assert "results" in response.json
+
+
+def create_sample_rating(db_session, user_id=1, movie_id=42, score=4.0):
+    """
+    Helper function to create a sample rating for testing.
+    """
+    rating = Rating(user_id=user_id, movie_id=movie_id, rating=score, review="Sample review")
+    db_session.add(rating)
+    db_session.commit()
+    return rating
+
+
+def test_post_friend_review_success(client, db_session):
+    """
+    Test case for posting a friend review successfully.
+    """
+    # Arrange
+    rating = create_sample_rating(db_session, user_id=2)  # friend
+
+    # Act
+    response = client.post(
+        f"/api/preference/rating/friends/{rating.rating_id}?agreed=True",
+        headers={"X-CSRF-Token": client.csrf_token},
+    )
+
+    # Assert
+    assert response.status_code == 200
+    assert response.json["message"] == "Rating review added successfully"
+
+    # Also check DB side effect
+    review = db_session.query(RatingReview).filter_by(rating_id=rating.rating_id).first()
+    assert review is not None
+    assert review.agreed is True
+
+
+def test_post_friend_review_missing_agreed(client, db_session):
+    """
+    Test case for posting a friend review with missing 'agreed' field.
+    """
+    # Arrange
+    rating = create_sample_rating(db_session, user_id=2)
+
+    # Act
+    response = client.post(
+        f"/api/preference/rating/friends/{rating.rating_id}",
+        headers={"X-CSRF-Token": client.csrf_token},
+    )
+
+    # Assert
+    assert response.status_code == 400
+
+
+def test_post_friend_review_not_found(client):
+    """
+    Test case for posting a friend review when the rating does not exist.
+    """
+    # Act
+    response = client.post(
+        "/api/preference/rating/friends/9999?agreed=True",
+        headers={"X-CSRF-Token": client.csrf_token},
+    )
+
+    # Assert
+    assert response.status_code == 404
+    assert response.json["message"] == "Rating not found"
+
+
+class MockResponse:
+    """
+    Mock class to simulate requests.Response for testing.
+    """
+
+    def __init__(self, json_data, status_code=200):
+        """
+        Initialize the mock response with JSON data and status code.
+        """
+        self._json_data = json_data
+        self.status_code = status_code
+
+    def json(self):
+        """
+        Return the JSON data of the mock response.
+        """
+        return self._json_data

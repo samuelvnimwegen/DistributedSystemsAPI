@@ -5,7 +5,8 @@ import requests
 from flask import request
 from flask_restx import Namespace, Resource, Api, fields, marshal
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from src.database import db, Rating
+from src.database import db, Rating, RatingReview
+from src.routes.favorite_resource import movie_list_model
 
 rating_ns = Namespace("rating", description="Rating operations")
 
@@ -38,6 +39,25 @@ rating_list_model = rating_ns.model(
     {
         "results": fields.List(fields.Nested(rating_model), description="List of ratings"),
     },
+)
+
+
+def str2bool(v):
+    """
+    Convert a string to a boolean value.
+    """
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ("yes", "true", "t", "1"):
+        return True
+    if v.lower() in ("no", "false", "f", "0"):
+        return False
+    raise ValueError("Boolean value expected.")
+
+
+rating_review_parser = rating_ns.parser()
+rating_review_parser.add_argument(
+    "agreed", type=str2bool, required=True, help="Agreed or not"
 )
 
 
@@ -138,6 +158,122 @@ class FriendsResource(Resource):
         results: list[Rating] = query.all()
 
         return marshal({"results": results}, rating_list_model), 200
+
+
+@rating_ns.route("/friends/movies")
+class FriendsMoviesResource(Resource):
+    """
+    Resource for fetching movies rated by your friends.
+    """
+
+    @rating_ns.response(200, "Success", movie_list_model)
+    @rating_ns.response(400, "Bad Request")
+    @rating_ns.response(401, "Unauthorized")
+    @rating_ns.response(404, "Not Found")
+    @jwt_required()
+    def get(self):
+        """
+        Get movies watched by a friend.
+        """
+        # Get the friends of the user
+        response = requests.get(
+            "http://user_api:5003/api/users/friends",
+            cookies={"access_token_cookie": request.cookies.get("access_token_cookie")},
+            timeout=5,
+        )
+        friends = response.json().get("results", [])
+        friend_ids = [friend["user_id"] for friend in friends]
+
+        # Get the movie ID from the request arguments
+        results: list[Rating] = db.session.query(Rating).filter(Rating.user_id.in_(friend_ids)).all()
+
+        # Get the movie IDs from the ratings
+        movie_ids = [rating.movie_id for rating in results]
+
+        if not movie_ids:
+            return {"results": []}, 200
+
+        # Send a request to the movie API to get the movie details
+        response = requests.get(
+            "http://movie_api:5000/api/movies/list",
+            params={"movie_ids": movie_ids},
+            cookies={"access_token_cookie": request.cookies.get("access_token_cookie")},
+            timeout=5,
+        )
+
+        return response.json(), 200
+
+
+@rating_ns.route("/friends/movies/<int:friend_id>")
+class FriendMoviesResource(Resource):
+    """
+    Resource for fetching movies watched by a friend.
+    """
+
+    @rating_ns.response(200, "Success", rating_list_model)
+    @rating_ns.response(400, "Bad Request")
+    @rating_ns.response(401, "Unauthorized")
+    @rating_ns.response(404, "Not Found")
+    @jwt_required()
+    def get(self, friend_id):
+        """
+        Get movies watched by a friend.
+        """
+        # Get the movie ID from the request arguments
+        query = db.session.query(Rating).filter(Rating.user_id == friend_id)
+        results: list[Rating] = query.all()
+
+        # Get the movie IDs from the ratings
+        movie_ids = [rating.movie_id for rating in results]
+
+        if not movie_ids:
+            return {"results": []}, 200
+
+        # Send a request to the movie API to get the movie details
+        response = requests.get(
+            "http://movie_api:5000/api/movies/list",
+            params={"movie_ids": movie_ids},
+            cookies={"access_token_cookie": request.cookies.get("access_token_cookie")},
+            timeout=5,
+        )
+
+        return response.json(), 200
+
+
+@rating_ns.route("/friends/<int:rating_id>")
+class FriendReviewResource(Resource):
+    """
+    Resource for adding a review to a rating from a friend.
+    """
+
+    @rating_ns.expect(rating_review_parser)
+    @rating_ns.response(200, "Success", rating_model)
+    @rating_ns.response(400, "Bad Request")
+    @rating_ns.response(401, "Unauthorized")
+    @rating_ns.response(404, "Not Found")
+    @jwt_required()
+    def post(self, rating_id):
+        """
+        Post a review for a rating from a friend.
+        """
+        user_id = int(get_jwt_identity())
+        args = rating_review_parser.parse_args(request)
+        agreed: bool = args.get("agreed", None)
+        if not agreed:
+            return {"message": "Agreed value is required, either True or False"}, 400
+
+        # Get the movie ID from the request arguments
+        rating: Rating = db.session.query(Rating).filter(Rating.rating_id == rating_id).first()
+
+        if not rating:
+            return {"message": "Rating not found"}, 404
+
+        # Make a rating review
+        rating_review = RatingReview(user_id=user_id, rating_id=rating_id, agreed=agreed)
+        db.session.add(rating_review)
+        db.session.commit()
+
+        return {"message": "Rating review added successfully"}, 200
 
 
 def register_routes(api_blueprint: Api) -> None:

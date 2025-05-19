@@ -24,16 +24,6 @@ user_list_model = user_ns.model(
     },
 )
 
-user_parser_name = user_ns.parser()
-user_parser_name.add_argument(
-    "username", type=str, required=True, help="Username of the user to retrieve", location="json",
-)
-
-user_parser_id = user_ns.parser()
-user_parser_id.add_argument(
-    "user_id", type=int, required=True, help="User ID of the user to retrieve", location="json",
-)
-
 
 @user_ns.route("/<int:user_id>")
 class UserResource(Resource):
@@ -41,7 +31,6 @@ class UserResource(Resource):
     This resource contains a GET method for fetching the user with the given ID.
     """
 
-    @user_ns.expect(user_parser_id)
     @user_ns.response(200, "Success")
     @user_ns.response(401, "Unauthorized")
     @jwt_required()
@@ -61,7 +50,6 @@ class UserResourceByName(Resource):
     This resource contains a GET method for fetching the user with the given username.
     """
 
-    @user_ns.expect(user_parser_name)
     @user_ns.response(200, "Success")
     @user_ns.response(401, "Unauthorized")
     @jwt_required()

@@ -1,4 +1,4 @@
-name: CI - Full Project + Consume Api, Linting, Testing, Type Checking
+name: CI - Linting, Testing, Type Checking
 
 on:
   push:

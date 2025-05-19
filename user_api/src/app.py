@@ -51,7 +51,7 @@ def create_app(api_config: APIConfig) -> Flask:
     flask_app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
     flask_app.config["JWT_COOKIE_SECURE"] = False
     flask_app.config['JWT_ACCESS_COOKIE_PATH'] = '/'
-    flask_app.config['JWT_COOKIE_CSRF_PROTECT'] = True  # or False if you're testing without CSRF
+    flask_app.config['JWT_COOKIE_CSRF_PROTECT'] = False  # or False if you're testing without CSRF
     flask_app.config["SQLALCHEMY_DATABASE_URI"] = api_config.db.connection_url
     flask_app.config["SECRET_KEY"] = api_config.secret_key
     flask_app.config["DEBUG"] = api_config.debug
