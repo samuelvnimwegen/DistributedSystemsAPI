@@ -27,7 +27,7 @@ def test_get_popular_movies_returns_limited_list(mock_get, client, db_session):
 
     mock_movie_picture(mock_get)
 
-    response = client.get("/api/movies?amount=3")
+    response = client.get("/api/movies/list?amount=3")
 
     assert response.status_code == 200
     data = response.get_json()
