@@ -85,7 +85,7 @@ class PopularMoviesResource(Resource):
     @limiter.limit("10000 per month")
     def get(self):
         """
-        Get a list of movies.
+        Get a list of movies automatically sorted by rating.
         """
         args = get_movies_parser.parse_args()
         if args.get("movie_ids", None):
