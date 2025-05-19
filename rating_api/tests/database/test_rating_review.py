@@ -2,7 +2,6 @@
 Test cases for the RatingReview model.
 """
 import pytest
-from src.database.models.rating import Rating
 from src.database.models.rating_review import RatingReview
 
 

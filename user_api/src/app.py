@@ -38,11 +38,15 @@ def create_app(api_config: APIConfig) -> Flask:
         format=api_config.logging.format,
         filename=api_config.logging.file
     )
+    with open("private.pem", "r", encoding="utf-8") as private_key_file:
+        private_key_file = private_key_file.read()
+    with open("public.pem", "r", encoding="utf-8") as public_key_file:
+        public_key_file = public_key_file.read()
 
     flask_app = Flask(api_config.name, instance_path=os.getcwd())
     flask_app.config["JWT_ALGORITHM"] = "RS256"  # Use RSA-SHA256
-    flask_app.config["JWT_PRIVATE_KEY"] = open("private.pem", "r").read()
-    flask_app.config["JWT_PUBLIC_KEY"] = open("public.pem", "r").read()
+    flask_app.config["JWT_PRIVATE_KEY"] = private_key_file
+    flask_app.config["JWT_PUBLIC_KEY"] = public_key_file
     flask_app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
     flask_app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
     flask_app.config["JWT_COOKIE_SECURE"] = False

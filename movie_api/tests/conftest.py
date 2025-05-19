@@ -109,7 +109,7 @@ def __add_jwt_cookie(client) -> str:
     """
 
     cookie_name = current_app.config['JWT_COOKIE_NAME']
-    token: str = create_access_token(identity=1, fresh=True)
+    token: str = create_access_token(identity="1", fresh=True)
     client.set_cookie(
         cookie_name,
         token,

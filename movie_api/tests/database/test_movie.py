@@ -1,7 +1,10 @@
 """
 This file contains tests for the Movie model in the database.
 """
+from unittest.mock import MagicMock, patch
+
 import pytest
+
 from src.database.models import Movie, Genre
 
 
@@ -125,3 +128,109 @@ def test_get_recommended_movies_defaults_to_10(db_session):
     recommended = Movie.get_recommended_movies_by_rating(db_session)
 
     assert len(recommended) == 10
+
+
+def test_get_recommended_movies_by_rating_returns_top_movies(db_session):
+    """
+    Test that get_recommended_movies_by_rating returns the top-rated movies.
+    """
+    # Arrange
+    movie1 = Movie(rating=9.0, movie_name="Top Movie", runtime=120, meta_score=85, plot="A great movie")
+    movie2 = Movie(rating=8.5, movie_name="Second Best", runtime=130, meta_score=80, plot="Another great movie")
+    db_session.add(movie1)
+    db_session.add(movie2)
+    db_session.commit()
+
+    # Act
+    result = Movie.get_recommended_movies_by_rating(db_session, amount=2)
+
+    # Assert
+    assert result == [movie1, movie2]
+
+
+def test_get_recommended_movies_by_friends_returns_sorted_unwatched(db_session):
+    """
+    Test that get_recommended_movies_by_friends returns unwatched movies
+    sorted by how many friends watched them.
+    """
+    # Arrange
+    movie1 = Movie(rating=7.0, movie_name="Movie 1", runtime=100, meta_score=70, plot="Plot 1")
+    movie2 = Movie(rating=8.5, movie_name="Movie 2", runtime=110, meta_score=85, plot="Plot 2")
+    movie3 = Movie(rating=6.5, movie_name="Movie 3", runtime=90, meta_score=60, plot="Plot 3")
+    movie4 = Movie(rating=7.8, movie_name="Movie 4", runtime=105, meta_score=75, plot="Plot 4")
+    movie5 = Movie(rating=7.2, movie_name="Movie 5", runtime=95, meta_score=65, plot="Plot 5")
+
+    db_session.add_all([movie1, movie2, movie3, movie4, movie5])
+    db_session.commit()
+
+    friends_watched = {
+        1: [1, 2, 3],
+        2: [2, 3, 4],
+        3: [2, 5]
+    }
+    self_watched = [3]
+
+    # Act
+    result = Movie.get_recommended_movies_by_friends(
+        friends_watched=friends_watched,
+        self_watched=self_watched,
+        db_session=db_session,
+        amount=3
+    )
+
+    assert [m.movie_id for m in result] == [2, 1, 4]
+
+
+def test_get_recommended_movies_by_friends_returns_empty_if_all_watched(db_session):
+    """
+    Test that get_recommended_movies_by_friends returns an empty list
+    if the user has already watched all the movies their friends have watched.
+    """
+    # Arrange
+    movie1 = Movie(rating=7.0, movie_name="Movie 1", runtime=100, meta_score=70, plot="Plot 1")
+    db_session.add(movie1)
+    db_session.commit()
+
+    friends_watched = {
+        1: [1],
+        2: [1]
+    }
+    self_watched = [1]
+
+    # Act
+    result = Movie.get_recommended_movies_by_friends(
+        friends_watched=friends_watched,
+        self_watched=self_watched,
+        db_session=db_session,
+        amount=2
+    )
+
+    # Assert
+    assert result == []
+
+
+@patch("src.database.models.movie.requests.get")
+def test_get_poster_path_returns_correct_url(mock_get):
+    """
+    Test that get_poster_path returns the correct poster URL using mocked API response.
+    """
+    # Arrange
+    movie = Movie(
+        movie_name="Inception",
+        rating=8.8,
+        runtime=148,
+        meta_score=74,
+        plot="A thief steals corporate secrets using dream-sharing technology."
+    )
+    fake_response = {"results": [{"poster_path": "/inception.jpg"}]}
+
+    mock_response = MagicMock()
+    mock_response.json.return_value = fake_response
+    mock_get.return_value = mock_response
+
+    # Act
+    result = movie.get_poster_path()
+
+    # Assert
+    assert result == "https://image.tmdb.org/t/p/w500/inception.jpg"
+    mock_get.assert_called_once()

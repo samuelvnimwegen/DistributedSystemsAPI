@@ -2,11 +2,13 @@
 Rating model for the database.
 """
 from typing import TYPE_CHECKING
+
+from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import relationship, mapped_column, Mapped
 from src.database.base import Base
 
 if TYPE_CHECKING:
-    from src.database.models import User, Movie, RatingReview
+    from src.database.models import RatingReview
 
 
 class Rating(Base):
@@ -21,6 +23,9 @@ class Rating(Base):
     rating: Mapped[float]
     """The rating value."""
 
+    review: Mapped[str]
+    """The review text associated with the rating."""
+
     user_id: Mapped[int]
     """The ID of the user who made the rating."""
 
@@ -30,9 +35,14 @@ class Rating(Base):
     rating_reviews: Mapped["RatingReview"] = relationship(back_populates="rating")
     """The list of approvals associated with the rating."""
 
+    __table_args__ = (
+        UniqueConstraint("user_id", "movie_id", name="unique_rating"),
+    )
+
     def __init__(
         self,
         rating: float,
+        review: str,
         user_id: int,
         movie_id: int,
     ) -> None:
@@ -43,14 +53,17 @@ class Rating(Base):
         :param movie_id: The ID of the movie being rated.
         """
         assert isinstance(rating, (float, int)), "Rating must be a float."
+        assert isinstance(review, str), "Review must be a string."
         assert isinstance(user_id, int), "User ID must be an integer."
         assert isinstance(movie_id, int), "Movie ID must be an integer."
         assert rating > 0, "Rating must be greater than 0."
         assert rating <= 10, "Rating must be less than or equal to 10."
+        assert review, "Review cannot be empty."
         assert user_id > 0, "User ID must be greater than 0."
         assert movie_id > 0, "Movie ID must be greater than 0."
         super().__init__()
         self.rating = rating
+        self.review = review
         self.user_id = user_id
         self.movie_id = movie_id
 

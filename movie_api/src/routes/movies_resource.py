@@ -8,7 +8,7 @@ import logging
 import requests
 from flask import send_file
 from flask_restx import Namespace, Api, Resource, fields, marshal
-from flask_jwt_extended import jwt_required, get_current_user
+from flask_jwt_extended import jwt_required
 from src.routes.quickchart import QuickChartDataItem, create_quickchart_config
 from src.database import db, Movie, Genre
 from src.cache import cache
@@ -19,12 +19,15 @@ from src.limiter import limiter
 
 movies_api = Namespace("", description="Movie Operations")
 
-get_popular_parser = movies_api.parser()
-get_popular_parser.add_argument(
+get_movies_parser = movies_api.parser()
+get_movies_parser.add_argument(
     "amount",
     type=int,
     default=1,
     help="Number of popular movies to fetch, minimum 1, maximum 20",
+)
+get_movies_parser.add_argument(
+    "movie_ids", type=int, action="append", help="List of movie ids to fetch", required=False
 )
 
 genre_model = movies_api.model(
@@ -73,9 +76,9 @@ is_favorite_model = movies_api.model(
 )
 
 
-@movies_api.route('', methods=['GET'])
+@movies_api.route('/list', methods=['GET'])
 class PopularMoviesResource(Resource):
-    @movies_api.expect(get_popular_parser)
+    @movies_api.expect(get_movies_parser)
     @cache.cached(query_string=True)
     @limiter.limit("500 per hour")
     @limiter.limit("1000 per day")
@@ -84,7 +87,14 @@ class PopularMoviesResource(Resource):
         """
         Get a list of movies.
         """
-        args = get_popular_parser.parse_args()
+        args = get_movies_parser.parse_args()
+        if args.get("movie_ids", None):
+            movie_ids = args.get("movie_ids")
+            movie_list = db.session.query(Movie).filter(Movie.movie_id.in_(movie_ids)).all()
+            if not movie_list:
+                movies_api.abort(404, "Movies not found.")
+            return marshal({"results": movie_list}, movie_list_model)
+
         amount = args.get("amount", 1)
 
         movie_list = db.session.query(Movie).all()[:amount]
@@ -108,7 +118,7 @@ class MovieResource(Resource):
 
         Returns the details of a movie from the TMDB API.
         """
-        movie: Movie = db.session.query(Movie).filter_by(id=movie_id).first()
+        movie: Movie = db.session.query(Movie).filter(Movie.movie_id == movie_id).first()
         return marshal(movie, movie_model)
 
 
@@ -128,7 +138,7 @@ class SameGenresResource(Resource):
 
         Returns a list of movies with the same genres from the TMDB API.
         """
-        movie: Movie = db.session.query(Movie).filter_by(id=movie_id).first()
+        movie: Movie = db.session.query(Movie).filter(Movie.movie_id == movie_id).first()
         if not movie:
             movies_api.abort(404, "Movie not found.")
 
@@ -155,7 +165,7 @@ class SimilarRuntimeResource(Resource):
         """
         Get a list of movies with the same runtime (+- 10 minutes)
         """
-        movie: Movie = db.session.query(Movie).filter_by(id=movie_id).first()
+        movie: Movie = db.session.query(Movie).filter(Movie.movie_id == movie_id).first()
         if not movie:
             movies_api.abort(404, "Movie not found.")
         run_time: int = movie.runtime
@@ -165,7 +175,7 @@ class SimilarRuntimeResource(Resource):
             Movie.runtime.between(run_time - 10, run_time + 10),
             Movie.movie_id != movie_id
         ).all()
-        return movies
+        return marshal({"results": movies}, movie_list_model)
 
 
 @movies_api.route('/score-plot', methods=['GET'])

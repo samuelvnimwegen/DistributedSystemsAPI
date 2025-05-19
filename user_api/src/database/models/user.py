@@ -1,7 +1,6 @@
 """
 This module defines the User model for the application.
 """
-from typing import TYPE_CHECKING
 from hashlib import sha256
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import Table, Column, ForeignKey
@@ -111,4 +110,3 @@ class User(Base):
         :return: True if the passwords match, False otherwise.
         """
         return bool(sha256(password.encode()).hexdigest() == self.password)
-

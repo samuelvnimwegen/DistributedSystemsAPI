@@ -112,25 +112,29 @@ class Movie(Base):
         return recommended_movies
 
     @staticmethod
-    def get_recommended_movies_by_friends(user: "User", db_session: Session, amount: int = 10) -> list["Movie"]:
+    def get_recommended_movies_by_friends(
+        friends_watched: dict[int, list[int]],
+        self_watched: list[int],
+        db_session: Session,
+        amount: int = 10
+    ) -> list["Movie"]:
         """
         Get recommended movies based on which movies friends have watched.
-        :param user: The User instance.
+        :param friends_watched: A dictionary where keys are friend IDs and values are lists of movie IDs.
+        :param self_watched: A list of movie IDs that the user has already watched.
         :param db_session: The database session.
         :param amount: The number of recommended movies to return.
         :return: List of recommended movies.
         """
-        friends = user.get_friends()
-
         # Get movie_ids watched by friends
         movie_counter: Counter[int] = Counter()
 
-        for friend in friends:
-            movie_counter.update(movie.movie_id for movie in friend.watched_movies)
+        for friend_id in friends_watched.keys():
+            for movie_id in friends_watched[friend_id]:
+                movie_counter.update([movie_id])
 
         # Exclude movies already watched by the user
-        watched_movie_ids = {movie.movie_id for movie in user.watched_movies}
-        candidate_ids = [movie_id for movie_id, _ in movie_counter.most_common() if movie_id not in watched_movie_ids]
+        candidate_ids = [movie_id for movie_id, _ in movie_counter.most_common() if movie_id not in self_watched]
 
         if not candidate_ids:
             return []

@@ -1,6 +1,7 @@
 """
 The table for the favorite movies of the users.
 """
+from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from src.database.base import Base
 
@@ -11,11 +12,18 @@ class FavoriteMovie(Base):
     """
     __tablename__ = "favorite_movies"
 
-    user_id: Mapped[int] = mapped_column(primary_key=True)
+    favorite_movie_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    """The unique identifier for the favorite movie."""
+
+    user_id: Mapped[int] = mapped_column()
     """The ID of the user who made the rating."""
 
-    movie_id: Mapped[int] = mapped_column(primary_key=True)
+    movie_id: Mapped[int] = mapped_column()
     """The ID of the movie being rated."""
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "movie_id", name="unique_favorite_movie"),
+    )
 
     def __init__(self, user_id: int, movie_id: int) -> None:
         """

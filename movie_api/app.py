@@ -5,7 +5,6 @@ from the environment variables (in .env file or in the system).
 
 Disclaimer: This is based on our bachelor eindwerk project setup, which I also largely contributed to.
 """
-import os
 from confz import EnvSource
 import argparse
 from src.config import APIConfig

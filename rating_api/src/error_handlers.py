@@ -21,6 +21,8 @@ def register_error_handlers(jwt_manager: JWTManager, flask_app: Flask) -> None:
         Handle unauthorized requests.
         :return:
         """
+        if error == "Missing CSRF token":
+            return jsonify({"message": "Missing CSRF token"}), 401
         return jsonify({"message": "Unauthorized"}), 401
 
     @jwt_manager.expired_token_loader

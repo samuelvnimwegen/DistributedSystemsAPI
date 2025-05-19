@@ -19,16 +19,16 @@ def register_public_routes(app: Blueprint) -> None:
     :param app:
     """
     # Set the static URL path for the Swagger UI assets
-    apidoc.static_url_path = "/api/rating/swaggerui"
+    apidoc.static_url_path = "/api/preference/swaggerui"
 
     # Create a Blueprint to register routes
-    bp = Blueprint("RATING_API", __name__, url_prefix="/api/rating",
-                   static_url_path='/api/rating/swaggerui')
+    bp = Blueprint("PREFERENCE_API", __name__, url_prefix="/api/preference",
+                   static_url_path='/api/preference/swaggerui')
     api = Api(
         bp,
         version="1.0",
-        title="Rating Service API",
-        description="API documentation for the Rating Service of the Distributed Systems project",
+        title="Preference Service API",
+        description="API documentation for the Preference Service of the Distributed Systems project",
         doc='/'
     )
 

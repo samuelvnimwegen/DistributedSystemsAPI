@@ -5,6 +5,7 @@ from flask import jsonify, Flask, Response
 from flask_jwt_extended import JWTManager
 from flask_jwt_extended.exceptions import NoAuthorizationError
 
+
 # pylint: disable=unused-argument
 # type: ignore
 
@@ -15,12 +16,16 @@ def register_error_handlers(jwt_manager: JWTManager, flask_app: Flask) -> None:
     :param jwt_manager: The JWT manager to attach to
     :param flask_app: The Flask application instance
     """
+
     @jwt_manager.unauthorized_loader
     def unauthorized_callback(error) -> tuple[Response, int]:
         """
         Handle unauthorized requests.
         :return:
         """
+        if error == "Missing CSRF token":
+            return jsonify({"message": "Missing CSRF token"}), 401
+
         return jsonify({"message": "Unauthorized"}), 401
 
     @jwt_manager.expired_token_loader

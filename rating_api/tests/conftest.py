@@ -121,7 +121,6 @@ def __add_jwt_cookie(client) -> str:
         path=current_app.config['JWT_ACCESS_COOKIE_PATH'],
     )
 
-    # Set CSRF token as cookie (Flask-JWT-Extended expects this)
     csrf_token = get_csrf_token(token)
     client.set_cookie(
         key='csrf_access_token',

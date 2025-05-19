@@ -7,7 +7,6 @@ Disclaimer: This is based on our bachelor eindwerk project setup, which I also l
 """
 import logging
 import os
-from datetime import timedelta
 from dotenv import load_dotenv
 from confz import EnvSource
 from flask import Flask
@@ -40,8 +39,11 @@ def create_app(api_config: APIConfig) -> Flask:
 
     flask_app = Flask(api_config.name, instance_path=os.getcwd())
 
+    with open("public.pem", "r", encoding="utf-8") as public_key_file:
+        public_key = public_key_file.read()
+
     flask_app.config["JWT_ALGORITHM"] = "RS256"  # Use RSA-SHA256
-    flask_app.config["JWT_PUBLIC_KEY"] = open("public.pem", "r").read()
+    flask_app.config["JWT_PUBLIC_KEY"] = public_key
     flask_app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
     flask_app.config["JWT_COOKIE_SECURE"] = False
     flask_app.config['JWT_ACCESS_COOKIE_PATH'] = '/'
