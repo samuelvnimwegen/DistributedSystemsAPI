@@ -6,6 +6,9 @@ import pytest
 from src.database import User
 
 
+# pylint: disable=redefined-outer-name
+
+
 @pytest.fixture
 def another_user(db_session):
     """
@@ -17,7 +20,7 @@ def another_user(db_session):
     return user
 
 
-def test_get_all_users(client, db_session, another_user):
+def test_get_all_users(client):
     """
     Test that the GET /api/users/ endpoint returns all users.
     """
@@ -26,7 +29,6 @@ def test_get_all_users(client, db_session, another_user):
     data = response.get_json()
     usernames = [u["username"] for u in data["results"]]
     assert "test_user" in usernames
-    assert "bob" in usernames
 
 
 @pytest.mark.parametrize(

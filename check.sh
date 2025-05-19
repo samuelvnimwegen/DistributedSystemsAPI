@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # List of directories to check
-PROJECT_DIRS=("logging_api" "movie_api" "rating_api", "user_api")
+PROJECT_DIRS=("logging_api" "movie_api" "rating_api" "user_api")
 
 for DIR in "${PROJECT_DIRS[@]}"; do
   echo "🔍 Entering $DIR..."
@@ -49,7 +49,7 @@ for DIR in "${PROJECT_DIRS[@]}"; do
 
   echo "✅ All tests passed in $DIR."
   echo "🔙 Returning to root..."
-  cd - >/dev/null
+  cd .. || exit 1
 done
 
 echo "🎉 All checks passed for all directories!"

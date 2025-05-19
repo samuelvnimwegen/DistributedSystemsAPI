@@ -2,8 +2,6 @@
 Test cases for the friend resource in the user API.
 """
 import pytest
-from flask_restx import Api
-
 from src.database import User
 
 
@@ -18,7 +16,7 @@ def another_user(db_session):
     return user
 
 
-def test_get_friends_returns_user_friends(client, db_session, another_user):
+def test_get_friends_returns_user_friends(client, db_session, another_user):  # pylint: disable=redefined-outer-name
     """
     Test that the GET /friends endpoint returns the friends of the current user.
     """
@@ -34,7 +32,7 @@ def test_get_friends_returns_user_friends(client, db_session, another_user):
     assert results[0]["user_id"] == another_user.user_id
 
 
-def test_post_add_friend_success(client, db_session, another_user):
+def test_post_add_friend_success(client, db_session, another_user):  # pylint: disable=redefined-outer-name
     """
     Test that the POST /friends endpoint adds a friend successfully.
     """

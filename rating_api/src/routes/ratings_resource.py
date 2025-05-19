@@ -101,42 +101,43 @@ class RatingResource(Resource):
 
         return {"message": "Rating deleted successfully"}, 200
 
-    @rating_ns.route("/friends")
-    class FriendsResource(Resource):
+
+@rating_ns.route("/friends")
+class FriendsResource(Resource):
+    """
+    Resource for fetching ratings from friends.
+    """
+
+    @rating_ns.expect(friend_rating_parser)
+    @rating_ns.response(200, "Success", rating_list_model)
+    @rating_ns.response(400, "Bad Request")
+    @rating_ns.response(401, "Unauthorized")
+    @rating_ns.response(404, "Not Found")
+    @jwt_required()
+    def get(self):
         """
-        Resource for fetching ratings from friends.
+        Get ratings from friends.
         """
+        # Get the movie if it is provided
+        args = friend_rating_parser.parse_args(request)
+        movie_id = args.get("movie_id", None)
 
-        @rating_ns.expect(friend_rating_parser)
-        @rating_ns.response(200, "Success", rating_list_model)
-        @rating_ns.response(400, "Bad Request")
-        @rating_ns.response(401, "Unauthorized")
-        @rating_ns.response(404, "Not Found")
-        @jwt_required()
-        def get(self):
-            """
-            Get ratings from friends.
-            """
-            # Get the movie if it is provided
-            args = friend_rating_parser.parse_args(request)
-            movie_id = args.get("movie_id", None)
+        # Ge the friends of the user
+        response = requests.get(
+            "http://user_api:5003/api/users/friends",
+            cookies={"access_token_cookie": request.cookies.get("access_token_cookie")},
+            timeout=5,
+        )
+        friends = response.json().get("results", [])
+        friend_ids = [friend["user_id"] for friend in friends]
 
-            # Ge the friends of the user
-            response = requests.get(
-                "http://user_api:5003/api/users/friends",
-                cookies={"access_token_cookie": request.cookies.get("access_token_cookie")},
-                timeout=5,
-            )
-            friends = response.json().get("results", [])
-            friend_ids = [friend["user_id"] for friend in friends]
+        # Get the movie ID from the request arguments
+        query = db.session.query(Rating).filter(Rating.user_id.in_(friend_ids))
+        if movie_id:
+            query.filter(Rating.movie_id == movie_id)
+        results: list[Rating] = query.all()
 
-            # Get the movie ID from the request arguments
-            query = db.session.query(Rating).filter(Rating.user_id.in_(friend_ids))
-            if movie_id:
-                query.filter(Rating.movie_id == movie_id)
-            results: list[Rating] = query.all()
-
-            return marshal({"results": results}, rating_list_model), 200
+        return marshal({"results": results}, rating_list_model), 200
 
 
 def register_routes(api_blueprint: Api) -> None:

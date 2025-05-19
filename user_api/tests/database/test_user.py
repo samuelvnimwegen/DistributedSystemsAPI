@@ -1,7 +1,6 @@
 """
 Test cases for the User model in the database.
 """
-import datetime
 import pytest
 from sqlalchemy.orm import Session
 from src.database.models.user import User
