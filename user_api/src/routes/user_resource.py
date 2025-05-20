@@ -95,7 +95,8 @@ class UsersResource(Resource):
         """
         args = user_list_parser.parse_args()
         self_included = args.get("self_included", False)
-        user_id = get_jwt_identity()
+
+        user_id = int(get_jwt_identity())
         if not self_included:
             users = db.session.query(User).filter(User.user_id != user_id).all()
         else:

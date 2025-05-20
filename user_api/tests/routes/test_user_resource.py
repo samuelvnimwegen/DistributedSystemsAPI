@@ -24,7 +24,7 @@ def test_get_all_users(client):
     """
     Test that the GET /api/users/ endpoint returns all users.
     """
-    response = client.get("/api/users/retrieve")
+    response = client.get("/api/users/retrieve?self_included=True")
     assert response.status_code == 200
     data = response.get_json()
     usernames = [u["username"] for u in data["results"]]
