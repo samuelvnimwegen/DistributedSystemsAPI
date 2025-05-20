@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # List of directories to check
-PROJECT_DIRS=("logging_api" "movie_api" "rating_api" "user_api")
+PROJECT_DIRS=("activity_api" "movie_api" "preference_api" "user_api")
 
 for DIR in "${PROJECT_DIRS[@]}"; do
   echo "🔍 Entering $DIR..."

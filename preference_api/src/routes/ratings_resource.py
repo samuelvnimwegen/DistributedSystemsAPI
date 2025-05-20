@@ -83,7 +83,7 @@ class RatingResource(Resource):
         # Check if the movie is watched
         jwt = request.cookies.get("access_token_cookie")
         response = requests.get(
-            "http://logging_api:5001/api/logging/watched",
+            "http://activity_api:5001/api/activity/watched",
             params={"user_id": user_id, "movie_id": movie_id},
             cookies={"access_token_cookie": jwt},
             timeout=5,

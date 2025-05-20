@@ -80,7 +80,7 @@ class FriendsRecommendationResource(Resource):
 
         # Get the movies that friends watched
         response = requests.get(
-            "http://logging_api:5001/api/logging/watched",
+            "http://activity_api:5001/api/activity/watched",
             cookies={"access_token_cookie": request.cookies.get("access_token_cookie")},
             params={"user_id": friend_ids},
             timeout=5,

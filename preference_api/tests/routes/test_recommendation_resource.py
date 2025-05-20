@@ -46,7 +46,7 @@ def test_get_friends_recommendations_success(mock_get, client):
             mock.status_code = 200
             mock.json.return_value = {"results": [{"user_id": 2}, {"user_id": 3}]}
             return mock
-        if "logging_api" in url:
+        if "activity_api" in url:
             mock = Mock()
             mock.status_code = 200
             mock.json.return_value = {

@@ -23,7 +23,7 @@ def test_get_newsfeed_success(mock_query, mock_requests, client):
     mock_result.watched_at = "2024-01-01T12:00:00"
     mock_query.return_value.filter.return_value.order_by.return_value.all.return_value = [mock_result]
 
-    response = client.get("/api/logging/newsfeed/")
+    response = client.get("/api/activity/newsfeed/")
 
     assert response.status_code == 200
     assert "results" in response.json
@@ -37,7 +37,7 @@ def test_get_newsfeed_friends_api_error(mock_requests, client):
         json=lambda: {"error": "User service down"}
     )
 
-    response = client.get("/api/logging/newsfeed/")
+    response = client.get("/api/activity/newsfeed/")
 
     assert response.status_code == 500
     assert "message" in response.json
@@ -51,7 +51,7 @@ def test_get_newsfeed_no_friends(mock_requests, client):
         json=lambda: {"results": []}
     )
 
-    response = client.get("/api/logging/newsfeed/")
+    response = client.get("/api/activity/newsfeed/")
 
     assert response.status_code == 200
     assert response.json == {"results": []}
@@ -67,7 +67,7 @@ def test_get_newsfeed_no_movies(mock_query, mock_requests, client):
 
     mock_query.return_value.filter.return_value.order_by.return_value.all.return_value = []
 
-    response = client.get("/api/logging/newsfeed/")
+    response = client.get("/api/activity/newsfeed/")
 
     assert response.status_code == 200
     assert response.json == {"results": []}

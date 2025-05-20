@@ -19,16 +19,16 @@ def register_public_routes(app: Blueprint) -> None:
     :param app:
     """
     # Set the static URL path for the Swagger UI assets
-    apidoc.static_url_path = "/api/logging/swaggerui"
+    apidoc.static_url_path = "/api/activity/swaggerui"
 
     # Create a Blueprint to register routes
-    bp = Blueprint("LOGGING_API", __name__, url_prefix="/api/logging",
-                   static_url_path='/api/logging/swaggerui')
+    bp = Blueprint("ACTIVITY_API", __name__, url_prefix="/api/activity",
+                   static_url_path='/api/activity/swaggerui')
     api = Api(
         bp,
         version="1.0",
-        title="Logging Service API",
-        description="API documentation for Logging Service of the Distributed Systems project",
+        title="Activity Service API",
+        description="API documentation for Activity Service of the Distributed Systems project",
         doc='/'
     )
 

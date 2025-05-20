@@ -9,24 +9,24 @@ services:
       movie_db:
         condition: service_healthy
 
-  logging_api:
-    build: logging_api
+  activity_api:
+    build: activity_api
     ports:
       - "5001:5001"
     networks:
       - app-network
     depends_on:
-      logging_db:
+      activity_db:
         condition: service_healthy
 
-  rating_api:
-    build: rating_api
+  preference_api:
+    build: preference_api
     ports:
       - "5002:5002"
     networks:
       - app-network
     depends_on:
-      rating_db:
+      preference_db:
         condition: service_healthy
 
   user_api:
@@ -45,8 +45,8 @@ services:
       - "5173:5173"
     depends_on:
       - movie_api
-      - logging_api
-      - rating_api
+      - activity_api
+      - preference_api
       - user_api
     networks:
       - app-network
@@ -67,9 +67,9 @@ services:
       - ./frontend/dist:/usr/share/nginx/html
     depends_on:
       - frontend
-      - logging_api
+      - activity_api
       - movie_api
-      - rating_api
+      - preference_api
       - user_api
     networks:
       - app-network
@@ -95,20 +95,20 @@ services:
     ports:
         - "5433:5432" # Expose Postgres to the host machine for debugging purposes
 
-  logging_db:
+  activity_db:
     image: postgres:17-alpine
-    container_name: logging_db
+    container_name: activity_db
     restart: always
     environment:
       POSTGRES_USER: ds_user
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: logging_db
+      POSTGRES_DB: activity_db
     volumes:
-      - logging_pgdata:/var/lib/postgresql/data
+      - activity_pgdata:/var/lib/postgresql/data
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "ds_user", "-d", "logging_db"]
+      test: ["CMD", "pg_isready", "-U", "ds_user", "-d", "activity_db"]
       interval: 10s
       retries: 5
       start_period: 30s
@@ -116,20 +116,20 @@ services:
     ports:
       - "5434:5432" # Expose Postgres to the host machine for debugging purposes
 
-  rating_db:
+  preference_db:
     image: postgres:17-alpine
-    container_name: rating_db
+    container_name: preference_db
     restart: always
     environment:
       POSTGRES_USER: ds_user
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: rating_db
+      POSTGRES_DB: preference_db
     volumes:
-      - rating_pgdata:/var/lib/postgresql/data
+      - preference_pgdata:/var/lib/postgresql/data
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "ds_user", "-d", "rating_db"]
+      test: ["CMD", "pg_isready", "-U", "ds_user", "-d", "preference_db"]
       interval: 10s
       retries: 5
       start_period: 30s
@@ -160,8 +160,8 @@ services:
 
 volumes:
   user_pgdata:
-  rating_pgdata:
-  logging_pgdata:
+  preference_pgdata:
+  activity_pgdata:
   movie_pgdata:
 
 networks:
