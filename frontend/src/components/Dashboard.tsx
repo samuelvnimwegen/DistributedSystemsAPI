@@ -1,45 +1,38 @@
 import React, {useEffect, useState} from 'react';
-import {useAuth} from '../auth/AuthContext';
-import {useNavigate} from 'react-router-dom';
-import MovieModal from './MovieModal';
 import '../css/DashBoard.css'; // Import your CSS file for custom styles
 import '../css/FrontPage.css'; // Import your CSS file for custom styles
+import {useNavigationHelpers} from "../routing/useNavigation";
 
 type Movie = {
     id: number;
     title: string;
     posterUrl: string;
-    releaseDate: string;
 }
 
 type APIMovieResponse = {
-    id: number;
-    title: string;
+    movie_id: number;
+    movie_name: string;
     poster_path: string;
-    release_date: string;
 }
 
 const Dashboard: React.FC = () => {
     const [movies, setMovies] = useState<Movie[]>([]);
     const [favoriteMovieIds, setFavoriteMovieIds] = useState<Set<number>>(new Set());
     const [favoriteMovies, setFavoriteMovies] = useState<Movie[]>([])
-    const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
-    const {logout} = useAuth();
-    const navigate = useNavigate();
+    const { handleLogout, handleHome, goToFriends } = useNavigationHelpers();
 
     // Get all the popular movies
     useEffect(() => {
         // Fetch popular movies when the component mounts
         const fetchMovies = async () => {
             try {
-                const response = await fetch('/api/movies?amount=20');
+                const response = await fetch('/api/movies/list?amount=20');
                 const data = await response.json();
                 console.log('Fetched movies:', data);
                 const transformed: Movie[] = data.results.map((movie: APIMovieResponse) => ({
-                    id: movie.id,
-                    title: movie.title,
-                    posterUrl: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
-                    releaseDate: movie.release_date,
+                    id: movie.movie_id,
+                    title: movie.movie_name,
+                    posterUrl: movie.poster_path,
                 }));
                 setMovies(transformed); // Assuming the response contains an array of movies
             } catch (error) {
@@ -60,13 +53,12 @@ const Dashboard: React.FC = () => {
     // Get the users favorite movies:
     const fetchFavoriteMovies = async () => {
         try {
-            const response = await fetch('/api/movies/favorite');
+            const response = await fetch('/api/preference/favorite');
             const data = await response.json();
             const transformed: Movie[] = data.results.map((movie: APIMovieResponse) => ({
-                id: movie.id,
-                title: movie.title,
+                id: movie.movie_id,
+                title: movie.movie_name,
                 posterUrl: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
-                releaseDate: movie.release_date,
             }));
             setFavoriteMovies(transformed);
             setFavoriteMovieIds(new Set(transformed.map(m => m.id))); // Optional
@@ -77,32 +69,7 @@ const Dashboard: React.FC = () => {
     useEffect(() => {
         fetchFavoriteMovies();
     }, []);
-    const handleLogout = async () => {
-        try {
-            // Send a POST request to the /api/logout endpoint
-            const response = await fetch('/api/logout', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    // Add any required headers (e.g., authorization token) here
-                },
-            });
 
-            // Check if the request was successful
-            if (response.ok) {
-                // Perform the logout action
-                logout();
-                navigate('/');
-            } else {
-                console.error('Logout failed');
-            }
-        } catch (error) {
-            console.error('Error logging out:', error);
-        }
-    };
-    const handleHome = () => {
-        navigate('/');
-    };
     const toggleFavorite = async (id: number) => {
         const isFavorite = favoriteMovieIds.has(id);
         try {
@@ -121,7 +88,7 @@ const Dashboard: React.FC = () => {
                 'Content-Type': 'application/json',
                 ...(csrfToken ? {'X-CSRF-TOKEN': csrfToken} : {}),
             };
-            const response = await fetch(`/api/movies/favorite/${id}`, {
+            const response = await fetch(`/api/preference/favorite/${id}`, {
                 method: isFavorite ? 'DELETE' : 'POST',
                 headers: headers
             });
@@ -159,6 +126,23 @@ const Dashboard: React.FC = () => {
                 >
                     Log Out
                 </button>
+                <button
+                    onClick={goToFriends}
+                    className="login-button"
+                    style={{
+                        position: 'absolute',
+                        right: '125px', // Changed from left to right
+                        top: '20px',
+                        padding: '10px 20px',
+                        backgroundColor: '#4CAF50',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: 'pointer'
+                    }}
+                >
+                    Friends
+                </button>
                 <h1 className="top-bar-title">Dashboard</h1>
                 <button
                     onClick={handleHome}
@@ -184,7 +168,7 @@ const Dashboard: React.FC = () => {
                 <h2 className="section-title">Popular Movies</h2>
                 <div className="movies-grid">
                     {movies.slice().map((movie) => (
-                        <div key={movie.id} className="movie-card" onClick={() => setSelectedMovie(movie)}>
+                        <div key={movie.id} className="movie-card">
                             <img
                                 src={movie.posterUrl}
                                 alt={movie.title}
@@ -206,9 +190,6 @@ const Dashboard: React.FC = () => {
                     ))}
                 </div>
             </section>
-            {selectedMovie && (
-                <MovieModal movie={selectedMovie} onClose={() => setSelectedMovie(null)}/>
-            )}
 
             {/* Grid of favorite movies */}
             <section className="movies-section">

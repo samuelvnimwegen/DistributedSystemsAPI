@@ -73,8 +73,20 @@ class WatchedMovieResource(Resource):
 
         return {"message": "Movie marked as watched"}, 200
 
+    @watched_movie_api.doc(params={"movie_id": "The ID of the movie to check if it's watched."})
+    @watched_movie_api.response(200, "Success")
+    @jwt_required()
+    def get(self, movie_id):
+        """
+        Get the watched status of a movie. This is whether the movie is in the watched list or not.
+        """
+        user_id = int(get_jwt_identity())
+        if db.session.query(WatchedMovie).filter_by(user_id=user_id, movie_id=movie_id).first():
+            return {"message": "Movie is watched."}
+        return {"message": "Movie is not in the watched list."}
 
-@watched_movie_api.route("/")
+
+@watched_movie_api.route("")
 class WatchedMoviesResource(Resource):
     """
     Resource for managing watched movies.

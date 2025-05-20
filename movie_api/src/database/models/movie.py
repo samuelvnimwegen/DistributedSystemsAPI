@@ -162,8 +162,11 @@ class Movie(Base):
             'https://api.themoviedb.org/3/search/movie',
             params={'query': self.movie_name},
             headers=API_HEADERS,
-            timeout=10
+            timeout=1
         )
         data = response.json()
+        results = data.get('results', [])
+        if not results:
+            return "https://image.tmdb.org/t/p/w500/dz3AjGWAPV4cK8lRDY0DdaVfGUK.jpg"
         poster_path = data['results'][0]['poster_path']
         return f"https://image.tmdb.org/t/p/w500{poster_path}"

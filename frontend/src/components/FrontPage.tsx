@@ -25,7 +25,7 @@ const FrontPage: React.FC = () => {
   useEffect(() => {
     const fetchMovies = async () => {
       try {
-        const response = await fetch('/api/movies?amount=20');
+        const response = await fetch('/api/movies/list?amount=20');
         const data = await response.json();
 
         const transformed: Movie[] = data.results.map((movie: APIMovieResponse) => ({

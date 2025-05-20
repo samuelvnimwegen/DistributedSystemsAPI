@@ -12,7 +12,7 @@ const LoginPage = () => {
 
     const handleSignup = async () => {
       try {
-        const response = await fetch('/api/sign_up', {
+        const response = await fetch('/api/users/sign_up', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

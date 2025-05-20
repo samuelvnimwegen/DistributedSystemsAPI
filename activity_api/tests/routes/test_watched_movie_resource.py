@@ -32,7 +32,7 @@ def test_get_watched_movies(client, db_session):
     db_session.add(WatchedMovie(user_id=1, movie_id=11))
     db_session.commit()
 
-    response = client.get("api/activity/watched/")
+    response = client.get("api/activity/watched")
     assert response.status_code == 200
     data = response.get_json()
     assert "results" in data
@@ -47,7 +47,7 @@ def test_get_filtered_watched_movies(client, db_session):
     db_session.add(WatchedMovie(user_id=2, movie_id=11))
     db_session.commit()
 
-    response = client.get("/api/activity/watched/?user_id=2&movie_id=11")
+    response = client.get("/api/activity/watched?user_id=2&movie_id=11")
     assert response.status_code == 200
     data = response.get_json()
     assert len(data["results"]) == 1
@@ -67,9 +67,39 @@ def test_get_watched_movies_since_timestamp(client, db_session):
     db_session.commit()
 
     since = (datetime.now() - timedelta(hours=2)).isoformat()
-    response = client.get(f"/api/activity/watched/?since_timestamp={since}")
+    response = client.get(f"/api/activity/watched?since_timestamp={since}")
 
     assert response.status_code == 200
     data = response.get_json()
     assert len(data["results"]) == 1
     assert data["results"][0]["movie_id"] == 11
+
+
+def test_movie_is_watched(client, db_session):
+    """
+    Test that a movie is correctly marked as watched.
+    """
+    user_id = 1
+    movie_id = 42
+
+    db_session.add(WatchedMovie(user_id=user_id, movie_id=movie_id))
+    db_session.commit()
+
+    response = client.get(f"/api/activity/watched/{movie_id}")
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["message"] == "Movie is watched."
+
+
+def test_movie_is_not_watched(client):
+    """
+    Test that a movie not in the user's watched list is reported correctly.
+    """
+    movie_id = 99  # Not in DB
+
+    response = client.get(f"/api/activity/watched/{movie_id}")
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["message"] == "Movie is not in the watched list."

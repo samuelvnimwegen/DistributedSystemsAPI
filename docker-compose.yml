@@ -1,46 +1,35 @@
 services:
   movie_api:
     build: movie_api
-    ports:
-      - "5000:5000"
-    networks:
-      - app-network
+    restart: always
     depends_on:
       movie_db:
         condition: service_healthy
 
   activity_api:
     build: activity_api
-    ports:
-      - "5001:5001"
-    networks:
-      - app-network
+    restart: always
     depends_on:
       activity_db:
         condition: service_healthy
 
   preference_api:
     build: preference_api
-    ports:
-      - "5002:5002"
-    networks:
-      - app-network
+    restart: always
     depends_on:
       preference_db:
         condition: service_healthy
 
   user_api:
     build: user_api
-    ports:
-      - "5003:5003"
-    networks:
-      - app-network
+    restart: always
     depends_on:
       user_db:
         condition: service_healthy
 
   frontend:
     build: ./frontend
+    restart: always
     ports:
       - "5173:5173"
     depends_on:
@@ -49,7 +38,7 @@ services:
       - preference_api
       - user_api
     networks:
-      - app-network
+      - default
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -71,8 +60,6 @@ services:
       - movie_api
       - preference_api
       - user_api
-    networks:
-      - app-network
 
   movie_db:
     image: postgres:17-alpine
@@ -85,7 +72,7 @@ services:
     volumes:
       - movie_pgdata:/var/lib/postgresql/data
     networks:
-      - app-network
+      - default
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "ds_user", "-d", "movie_db"]
       interval: 10s
@@ -106,7 +93,7 @@ services:
     volumes:
       - activity_pgdata:/var/lib/postgresql/data
     networks:
-      - app-network
+      - default
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "ds_user", "-d", "activity_db"]
       interval: 10s
@@ -127,7 +114,7 @@ services:
     volumes:
       - preference_pgdata:/var/lib/postgresql/data
     networks:
-      - app-network
+      - default
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "ds_user", "-d", "preference_db"]
       interval: 10s
@@ -148,7 +135,7 @@ services:
     volumes:
       - user_pgdata:/var/lib/postgresql/data
     networks:
-      - app-network
+      - default
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "ds_user", "-d", "user_db"]
       interval: 10s
@@ -164,6 +151,3 @@ volumes:
   activity_pgdata:
   movie_pgdata:
 
-networks:
-  app-network:
-    driver: bridge

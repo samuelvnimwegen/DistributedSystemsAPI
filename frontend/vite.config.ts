@@ -6,7 +6,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api': 'http://api:5000', // Docker internal hostname
+      '/api/movies': 'http://movie_api:5000',
+        '/api/activity': 'http://activity_api:5000',
+        '/api/users': 'http://user_api:5000',
+        '/api/preference': 'http://preference_api:5000',
     },
     watch: {
       usePolling: true,

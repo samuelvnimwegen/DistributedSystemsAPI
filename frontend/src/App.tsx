@@ -7,6 +7,8 @@ import PrivateRoute from "./auth/PrivateRoute.tsx";
 import LoginPage from "./components/LoginPage.tsx";
 import Dashboard from "./components/Dashboard.tsx";
 import SignUpPage from "./components/SignUpPage.tsx";
+import FriendsPage from "./components/FriendsPage.tsx";
+import MoviePage from "./components/MoviePage.tsx";
 
 function App() {
 
@@ -26,6 +28,19 @@ function App() {
               </PrivateRoute>
             }
           />
+            <Route path="/movies/:movie_id" element={
+              <PrivateRoute>
+                <MoviePage />
+              </PrivateRoute>
+            } />
+            <Route
+                path="/friends"
+                element={
+                <PrivateRoute>
+                    <FriendsPage />
+                </PrivateRoute>
+                }
+            />
         </Routes>
       </Router>
     </AuthProvider>

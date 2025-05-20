@@ -65,7 +65,7 @@ class FriendsRecommendationResource(Resource):
 
         # Send a request to the friends API to get the list of friends
         response = requests.get(
-            "http://user_api:5003/api/users/friends",
+            "http://user_api:5000/api/users/friends",
             cookies={"access_token_cookie": request.cookies.get("access_token_cookie")},
             timeout=5,
         )
@@ -80,7 +80,7 @@ class FriendsRecommendationResource(Resource):
 
         # Get the movies that friends watched
         response = requests.get(
-            "http://activity_api:5001/api/activity/watched",
+            "http://activity_api:5000/api/activity/watched",
             cookies={"access_token_cookie": request.cookies.get("access_token_cookie")},
             params={"user_id": friend_ids},
             timeout=5,

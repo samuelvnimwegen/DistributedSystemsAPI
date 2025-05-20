@@ -114,40 +114,6 @@ def create_rating(db_session, user_id, movie_id=42):
     db_session.commit()
 
 
-@patch("src.routes.ratings_resource.requests.get")
-def test_get_friends_movies(mock_get, client, db_session):
-    """
-    Test case for getting movies rated by friends.
-    """
-    # Mock /api/users/friends
-    mock_get.side_effect = [
-        MockResponse({"results": [{"user_id": 1}, {"user_id": 2}]}),
-        MockResponse({"results": [{"movie_id": 42, "title": "Inception"}]})
-    ]
-
-    create_rating(db_session, user_id=1)
-    create_rating(db_session, user_id=2)
-
-    response = client.get("/api/preference/rating/friends/movies")
-    assert response.status_code == 200
-    assert "results" in response.json
-
-
-@patch("src.routes.ratings_resource.requests.get")
-def test_get_friend_movies_by_id(mock_get, client, db_session):
-    """
-    Test case for getting movies rated by a specific friend.
-    """
-    create_rating(db_session, user_id=1)
-
-    # Mock call to movie_api
-    mock_get.return_value = MockResponse({"results": [{"movie_id": 42, "title": "Interstellar"}]})
-
-    response = client.get("/api/preference/rating/friends/movies/1")
-    assert response.status_code == 200
-    assert "results" in response.json
-
-
 def create_sample_rating(db_session, user_id=1, movie_id=42, score=4.0):
     """
     Helper function to create a sample rating for testing.
@@ -167,7 +133,7 @@ def test_post_friend_review_success(client, db_session):
 
     # Act
     response = client.post(
-        f"/api/preference/rating/friends/{rating.rating_id}?agreed=True",
+        f"/api/preference/rating_review/{rating.rating_id}?agreed=True",
         headers={"X-CSRF-Token": client.csrf_token},
     )
 
@@ -190,7 +156,7 @@ def test_post_friend_review_missing_agreed(client, db_session):
 
     # Act
     response = client.post(
-        f"/api/preference/rating/friends/{rating.rating_id}",
+        f"/api/preference/rating_review/{rating.rating_id}",
         headers={"X-CSRF-Token": client.csrf_token},
     )
 
@@ -204,7 +170,7 @@ def test_post_friend_review_not_found(client):
     """
     # Act
     response = client.post(
-        "/api/preference/rating/friends/9999?agreed=True",
+        "/api/preference/rating_review/9999?agreed=True",
         headers={"X-CSRF-Token": client.csrf_token},
     )
 

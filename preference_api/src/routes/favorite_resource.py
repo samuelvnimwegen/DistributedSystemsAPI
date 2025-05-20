@@ -104,7 +104,7 @@ class GetFavoriteMoviesResource(Resource):
         user_id = int(get_jwt_identity())
         favorite_movies = db.session.query(FavoriteMovie).filter(FavoriteMovie.user_id == user_id).all()
         if not favorite_movies:
-            return {"message": "No favorite movies found."}
+            return {"results": []}
 
         jwt = request.cookies.get("access_token_cookie")
         response = requests.get(

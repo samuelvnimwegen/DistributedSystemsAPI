@@ -28,7 +28,7 @@ class NewsfeedResource(Resource):
         """
         # Get the friends of the user
         response = requests.get(
-            "http://user_api:5003/api/users/friends",
+            "http://user_api:5000/api/users/friends",
             cookies={"access_token_cookie": request.cookies.get("access_token_cookie")},
             timeout=5,
         )

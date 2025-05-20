@@ -37,7 +37,7 @@ def test_post_add_friend_success(client, db_session, another_user):  # pylint: d
     Test that the POST /friends endpoint adds a friend successfully.
     """
     test_user = db_session.query(User).first()
-    response = client.post("/api/users/friends", json={"username": "bob"}, headers={"X-CSRF-Token": client.csrf_token})
+    response = client.post("/api/users/friends/bob", headers={"X-CSRF-Token": client.csrf_token})
 
     assert response.status_code == 200
     assert response.json == {"message": "Friend added successfully"}
@@ -51,10 +51,42 @@ def test_post_add_friend_not_found(client):
     Test that the POST /friends endpoint returns a 404 error when the user is not found.
     """
     response = client.post(
-        "/api/users/friends",
+        "/api/users/friends/nonexistent",
         headers={"X-CSRF-Token": client.csrf_token},
-        json={"username": "nonexistent"}
     )
 
     assert response.status_code == 404
     assert response.json == {"message": "User with username 'nonexistent' not found"}
+
+
+def test_delete_friend_success(client, db_session, another_user):  # pylint: disable=redefined-outer-name
+    """
+    Test that the DELETE /friends/<friend_name> endpoint successfully removes a friend.
+    """
+    user = db_session.query(User).first()
+    user.add_friend(another_user)
+    db_session.commit()
+
+    response = client.delete(
+        f"/api/users/friends/{another_user.username}",
+        headers={"X-CSRF-Token": client.csrf_token},
+    )
+
+    assert response.status_code == 200
+    assert response.json == {"message": "Friend removed successfully"}
+
+    db_session.refresh(user)
+    assert another_user not in user.get_friends()
+
+
+def test_delete_friend_not_found(client):
+    """
+    Test that the DELETE /friends/<friend_name> endpoint returns 404 if the friend does not exist.
+    """
+    response = client.delete(
+        "/api/users/friends/nonexistent_user",
+        headers={"X-CSRF-Token": client.csrf_token},
+    )
+
+    assert response.status_code == 404
+    assert response.json == {"message": "User with username 'nonexistent_user' not found"}

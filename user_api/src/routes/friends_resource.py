@@ -23,11 +23,6 @@ friends_list_model = friends_ns.model(
     },
 )
 
-friend_parser = friends_ns.parser()
-friend_parser.add_argument(
-    "username", type=str, required=True, help="Username of the friend to add", location="json",
-)
-
 
 @friends_ns.route("")
 class FriendsResource(Resource):
@@ -35,7 +30,7 @@ class FriendsResource(Resource):
     This resource contains a GET method for fetching the friends the current user has.
     """
 
-    @friends_ns.response(200, "Success")
+    @friends_ns.response(200, "Success", friends_list_model)
     @friends_ns.response(401, "Unauthorized")
     @jwt_required()
     def get(self):
@@ -47,28 +42,55 @@ class FriendsResource(Resource):
         friends: list[User] = user.get_friends()
         return marshal({"results": friends}, friends_list_model), 200
 
-    @friends_ns.expect(friend_parser)
-    @friends_ns.response(200, "Success")
-    @friends_ns.response(401, "Unauthorized")
-    @friends_ns.response(404, "User not found")
-    @jwt_required()
-    def post(self):
+    @friends_ns.route("/<string:user_name>")
+    class FriendsAddResource(Resource):
         """
-        Add a friend to the current user.
+        This resource contains a POST method for adding a friend to the current user.
         """
-        args = friend_parser.parse_args()
-        username = args["username"]
 
-        user = get_current_user()
-        friend = db.session.query(User).filter_by(username=username).first()
+        @friends_ns.response(200, "Success")
+        @friends_ns.response(401, "Unauthorized")
+        @friends_ns.response(404, "User not found")
+        @jwt_required()
+        def post(self, user_name):
+            """
+            Add a friend to the current user.
+            """
 
-        if not friend:
-            return {"message": f"User with username '{username}' not found"}, 404
+            user = get_current_user()
+            friend = db.session.query(User).filter_by(username=user_name).first()
+            if user.username == user_name:
+                return {"message": "You cannot add yourself as a friend."}, 400
 
-        user.add_friend(friend)
-        db.session.commit()
+            if not friend:
+                return {"message": f"User with username '{user_name}' not found"}, 404
 
-        return {"message": "Friend added successfully"}, 200
+            user.add_friend(friend)
+            db.session.commit()
+
+            return {"message": "Friend added successfully"}, 200
+
+        @friends_ns.response(200, "Success")
+        @friends_ns.response(401, "Unauthorized")
+        @friends_ns.response(404, "User not found")
+        @jwt_required()
+        def delete(self, user_name):
+            """
+            Remove a friend from the current user.
+            """
+            user = get_current_user()
+            friend = db.session.query(User).filter_by(username=user_name).first()
+
+            if not friend:
+                return {"message": f"User with username '{user_name}' not found"}, 404
+
+            if friend not in user.get_friends():
+                return {"message": f"User with username '{user_name}' is not a friend"}, 400
+
+            user.remove_friend(friend)
+            db.session.commit()
+
+            return {"message": "Friend removed successfully"}, 200
 
 
 def register_routes(api_blueprint: Api) -> None:

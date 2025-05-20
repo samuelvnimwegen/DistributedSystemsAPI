@@ -1,0 +1,70 @@
+.friends-page-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+
+.top-bar {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.top-bar-title {
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.section-title {
+    font-size: 22px;
+    margin-bottom: 15px;
+    color: white;
+}
+
+.friends-section {
+    margin-bottom: 40px;
+}
+
+.friends-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+}
+
+.friend-card {
+    border: 1px solid #ccc;
+    padding: 15px;
+    border-radius: 6px;
+    text-align: center;
+    background-color: black;
+}
+
+.friend-name {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.add-friend-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    background-color: #4CAF50;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.add-friend-button:disabled {
+    background-color: #bbb;
+    cursor: not-allowed;
+}
+
+.friend-added {
+    background-color: black;
+}
+
+.no-friends {
+    color: white;
+    font-style: italic;
+    text-align: center;
+}

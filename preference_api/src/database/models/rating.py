@@ -58,7 +58,6 @@ class Rating(Base):
         assert isinstance(movie_id, int), "Movie ID must be an integer."
         assert rating > 0, "Rating must be greater than 0."
         assert rating <= 10, "Rating must be less than or equal to 10."
-        assert review, "Review cannot be empty."
         assert user_id > 0, "User ID must be greater than 0."
         assert movie_id > 0, "Movie ID must be greater than 0."
         super().__init__()

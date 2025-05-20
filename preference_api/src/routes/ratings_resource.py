@@ -5,8 +5,7 @@ import requests
 from flask import request
 from flask_restx import Namespace, Resource, Api, fields, marshal
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from src.database import db, Rating, RatingReview
-from src.routes.favorite_resource import movie_list_model
+from src.database import db, Rating
 
 rating_ns = Namespace("rating", description="Rating operations")
 
@@ -38,6 +37,21 @@ rating_list_model = rating_ns.model(
     "RatingList",
     {
         "results": fields.List(fields.Nested(rating_model), description="List of ratings"),
+    },
+)
+
+rating_review_model = rating_ns.model(
+    "RatingReview",
+    {
+        "rating_id": fields.Integer(description="Rating ID"),
+        "user_id": fields.Integer(description="User ID"),
+        "agreed": fields.Boolean(description="Agreed or not"),
+    },
+)
+rating_review_list_model = rating_ns.model(
+    "RatingReviewList",
+    {
+        "results": fields.List(fields.Nested(rating_review_model), description="List of rating reviews"),
     },
 )
 
@@ -83,7 +97,7 @@ class RatingResource(Resource):
         # Check if the movie is watched
         jwt = request.cookies.get("access_token_cookie")
         response = requests.get(
-            "http://activity_api:5001/api/activity/watched",
+            "http://activity_api:5000/api/activity/watched",
             params={"user_id": user_id, "movie_id": movie_id},
             cookies={"access_token_cookie": jwt},
             timeout=5,
@@ -94,7 +108,20 @@ class RatingResource(Resource):
             return {'message': "Movie not watched"}, 400
 
         # Make a rating
-        rating = Rating(rating=args.get("rating"), review=args.get("review", ""), user_id=user_id, movie_id=movie_id)
+        review = args.get("review", None)
+
+        # Delete the old rating if it exists
+        old_rating = db.session.query(Rating).filter_by(user_id=user_id, movie_id=movie_id).first()
+        if old_rating:
+            db.session.delete(old_rating)
+            db.session.commit()
+
+        if not isinstance(review, str):
+            review = ""
+        try:
+            rating = Rating(rating=args.get("rating"), review=review, user_id=user_id, movie_id=movie_id)
+        except AssertionError as e:
+            return {"message": str(e)}, 400
         db.session.add(rating)
         db.session.commit()
 
@@ -121,6 +148,22 @@ class RatingResource(Resource):
 
         return {"message": "Rating deleted successfully"}, 200
 
+    @rating_ns.response(200, "Success", rating_list_model)
+    @rating_ns.response(400, "Bad Request")
+    @rating_ns.response(401, "Unauthorized")
+    @rating_ns.response(404, "Not Found")
+    @jwt_required()
+    def get(self, movie_id):
+        """
+        Get the ratings of a movie.
+        """
+        # Get the ratings
+        ratings: Rating = db.session.query(Rating).filter_by(movie_id=movie_id).all()
+        if not ratings:
+            return {"results": []}, 200
+
+        return marshal({"results": ratings}, rating_list_model), 200
+
 
 @rating_ns.route("/friends")
 class FriendsResource(Resource):
@@ -144,7 +187,7 @@ class FriendsResource(Resource):
 
         # Ge the friends of the user
         response = requests.get(
-            "http://user_api:5003/api/users/friends",
+            "http://user_api:5000/api/users/friends",
             cookies={"access_token_cookie": request.cookies.get("access_token_cookie")},
             timeout=5,
         )
@@ -160,54 +203,10 @@ class FriendsResource(Resource):
         return marshal({"results": results}, rating_list_model), 200
 
 
-@rating_ns.route("/friends/movies")
-class FriendsMoviesResource(Resource):
-    """
-    Resource for fetching movies rated by your friends.
-    """
-
-    @rating_ns.response(200, "Success", movie_list_model)
-    @rating_ns.response(400, "Bad Request")
-    @rating_ns.response(401, "Unauthorized")
-    @rating_ns.response(404, "Not Found")
-    @jwt_required()
-    def get(self):
-        """
-        Get movies watched by a friend.
-        """
-        # Get the friends of the user
-        response = requests.get(
-            "http://user_api:5003/api/users/friends",
-            cookies={"access_token_cookie": request.cookies.get("access_token_cookie")},
-            timeout=5,
-        )
-        friends = response.json().get("results", [])
-        friend_ids = [friend["user_id"] for friend in friends]
-
-        # Get the movie ID from the request arguments
-        results: list[Rating] = db.session.query(Rating).filter(Rating.user_id.in_(friend_ids)).all()
-
-        # Get the movie IDs from the ratings
-        movie_ids = [rating.movie_id for rating in results]
-
-        if not movie_ids:
-            return {"results": []}, 200
-
-        # Send a request to the movie API to get the movie details
-        response = requests.get(
-            "http://movie_api:5000/api/movies/list",
-            params={"movie_ids": movie_ids},
-            cookies={"access_token_cookie": request.cookies.get("access_token_cookie")},
-            timeout=5,
-        )
-
-        return response.json(), 200
-
-
-@rating_ns.route("/friends/movies/<int:friend_id>")
+@rating_ns.route("/friends/<int:friend_id>")
 class FriendMoviesResource(Resource):
     """
-    Resource for fetching movies watched by a friend.
+    Resource for fetching movies rated by a particular friend.
     """
 
     @rating_ns.response(200, "Success", rating_list_model)
@@ -217,63 +216,36 @@ class FriendMoviesResource(Resource):
     @jwt_required()
     def get(self, friend_id):
         """
-        Get movies watched by a friend.
+        Get the reviews a friend has made.
         """
         # Get the movie ID from the request arguments
         query = db.session.query(Rating).filter(Rating.user_id == friend_id)
         results: list[Rating] = query.all()
 
-        # Get the movie IDs from the ratings
-        movie_ids = [rating.movie_id for rating in results]
-
-        if not movie_ids:
-            return {"results": []}, 200
-
-        # Send a request to the movie API to get the movie details
-        response = requests.get(
-            "http://movie_api:5000/api/movies/list",
-            params={"movie_ids": movie_ids},
-            cookies={"access_token_cookie": request.cookies.get("access_token_cookie")},
-            timeout=5,
-        )
-
-        return response.json(), 200
+        return marshal({"results": results}, rating_list_model), 200
 
 
-@rating_ns.route("/friends/<int:rating_id>")
-class FriendReviewResource(Resource):
+@rating_ns.route("")
+class RatingResourceDefault(Resource):
     """
-    Resource for adding a review to a rating from a friend.
+    Returns a list of ratings from the user
     """
 
-    @rating_ns.expect(rating_review_parser)
-    @rating_ns.response(200, "Success", rating_model)
+    @rating_ns.response(200, "Success", rating_list_model)
     @rating_ns.response(400, "Bad Request")
     @rating_ns.response(401, "Unauthorized")
     @rating_ns.response(404, "Not Found")
     @jwt_required()
-    def post(self, rating_id):
+    def get(self):
         """
-        Post a review for a rating from a friend.
+        Returns a list of ratings from the user.
         """
         user_id = int(get_jwt_identity())
-        args = rating_review_parser.parse_args(request)
-        agreed: bool = args.get("agreed", None)
-        if not agreed:
-            return {"message": "Agreed value is required, either True or False"}, 400
+        ratings: list[Rating] = db.session.query(Rating).filter(Rating.user_id == user_id).all()
+        if not ratings:
+            return {"results": []}, 200
 
-        # Get the movie ID from the request arguments
-        rating: Rating = db.session.query(Rating).filter(Rating.rating_id == rating_id).first()
-
-        if not rating:
-            return {"message": "Rating not found"}, 404
-
-        # Make a rating review
-        rating_review = RatingReview(user_id=user_id, rating_id=rating_id, agreed=agreed)
-        db.session.add(rating_review)
-        db.session.commit()
-
-        return {"message": "Rating review added successfully"}, 200
+        return marshal({"results": ratings}, rating_list_model), 200
 
 
 def register_routes(api_blueprint: Api) -> None:

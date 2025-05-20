@@ -29,7 +29,7 @@ COPY .env.docker .env
 COPY . .
 
 # Expose the port that the application will run on
-EXPOSE 5002
+EXPOSE 5000
 
 # Set default command to run the app
-CMD ["sh", "-c", "alembic upgrade head && gunicorn src.wsgi:app -b 0.0.0.0:5002 --timeout 3600"]
+CMD ["sh", "-c", "alembic upgrade head && gunicorn src.wsgi:app -b 0.0.0.0:5000 --timeout 3600"]
