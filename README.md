@@ -24,7 +24,7 @@ sudo systemclt stop postgresql
 sudo systemclt start docker
 
 # Run the project
-./run_full_project.sh
+./run_microservices_docker.sh
 ```
 And the website will be on:
 http://localhost:5173
