@@ -52,7 +52,7 @@ class FriendsRecommendationResource(Resource):
     """
 
     @recommendation_ns.expect(rating_parser)
-    @recommendation_ns.response(200, "Success")
+    @recommendation_ns.response(200, "Success", movie_list_model)
     @recommendation_ns.response(400, "Bad Request")
     @recommendation_ns.response(401, "Unauthorized")
     @jwt_required()

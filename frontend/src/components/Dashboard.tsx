@@ -19,7 +19,9 @@ const Dashboard: React.FC = () => {
     const [movies, setMovies] = useState<Movie[]>([]);
     const [favoriteMovieIds, setFavoriteMovieIds] = useState<Set<number>>(new Set());
     const [favoriteMovies, setFavoriteMovies] = useState<Movie[]>([])
-    const { handleLogout, handleHome, goToFriends } = useNavigationHelpers();
+    const {handleLogout, handleHome, goToFriends, handleMovie} = useNavigationHelpers();
+    const [ratingRecommendations, setRatingRecommendations] = useState<Movie[]>([]);
+    const [friendRecommendations, setFriendRecommendations] = useState<Movie[]>([]);
 
     // Get all the popular movies
     useEffect(() => {
@@ -66,8 +68,41 @@ const Dashboard: React.FC = () => {
             console.error('Error fetching favorites:', error);
         }
     };
+
+    const fetchRatingRecommendations = async () => {
+        try {
+            const response = await fetch('/api/preference/recommendations?amount=20');
+            const data = await response.json();
+            const transformed: Movie[] = data.results.map((movie: APIMovieResponse) => ({
+                id: movie.movie_id,
+                title: movie.movie_name,
+                posterUrl: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
+            }));
+            setRatingRecommendations(transformed);
+        } catch (error) {
+            console.error('Error fetching rating recommendations:', error);
+        }
+    };
+
+    const fetchFriendRecommendations = async () => {
+        try {
+            const response = await fetch('/api/preference/recommendations/friends?amount=20');
+            const data = await response.json();
+            const transformed: Movie[] = data.results.map((movie: APIMovieResponse) => ({
+                id: movie.movie_id,
+                title: movie.movie_name,
+                posterUrl: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
+            }));
+            setFriendRecommendations(transformed);
+        } catch (error) {
+            console.error('Error fetching friend recommendations:', error);
+        }
+    };
+
     useEffect(() => {
         fetchFavoriteMovies();
+        fetchRatingRecommendations();
+        fetchFriendRecommendations();
     }, []);
 
     const toggleFavorite = async (id: number) => {
@@ -168,11 +203,15 @@ const Dashboard: React.FC = () => {
                 <h2 className="section-title">Popular Movies</h2>
                 <div className="movies-grid">
                     {movies.slice().map((movie) => (
-                        <div key={movie.id} className="movie-card">
+                        <div
+                            key={movie.id}
+                            className="movie-card"
+                        >
                             <img
                                 src={movie.posterUrl}
                                 alt={movie.title}
                                 className="movie-poster"
+                                onClick={() => handleMovie(movie.id)} // Navigate to movie page on click
                             />
                             <link rel="stylesheet"
                                   href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
@@ -201,6 +240,55 @@ const Dashboard: React.FC = () => {
                                 src={movie.posterUrl}
                                 alt={movie.title}
                                 className="movie-poster"
+                                onClick={() => handleMovie(movie.id)}
+                            />
+                            <div
+                                className="star-overlay"
+                                onClick={() => toggleFavorite(movie.id)}
+                            >
+                                <i className={`fa-star ${favoriteMovieIds.has(movie.id) ? 'fas' : 'far'}`}></i>
+                            </div>
+                            <h3 className="movie-title">{movie.title}</h3>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* Grid of recommended by rating */}
+            <section className="movies-section">
+                <h2 className="section-title">Recommended by Rating</h2>
+                <div className="movies-grid">
+                    {ratingRecommendations.map((movie) => (
+                        <div key={movie.id} className="movie-card">
+                            <img
+                                src={movie.posterUrl}
+                                alt={movie.title}
+                                className="movie-poster"
+                                onClick={() => handleMovie(movie.id)}
+                            />
+                            <div
+                                className="star-overlay"
+                                onClick={() => toggleFavorite(movie.id)}
+                            >
+                                <i className={`fa-star ${favoriteMovieIds.has(movie.id) ? 'fas' : 'far'}`}></i>
+                            </div>
+                            <h3 className="movie-title">{movie.title}</h3>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* Grid of recommended by friends watched */}
+            <section className="movies-section">
+                <h2 className="section-title">Recommended by Friends</h2>
+                <div className="movies-grid">
+                    {friendRecommendations.map((movie) => (
+                        <div key={movie.id} className="movie-card">
+                            <img
+                                src={movie.posterUrl}
+                                alt={movie.title}
+                                className="movie-poster"
+                                onClick={() => handleMovie(movie.id)}
                             />
                             <div
                                 className="star-overlay"

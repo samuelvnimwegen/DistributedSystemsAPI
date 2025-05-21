@@ -35,7 +35,7 @@ movie_model = movies_api.model(
     {
         "movie_id": fields.Integer(description="Movie ID"),
         "movie_name": fields.String(description="Movie title"),
-        "plot": fields.String(description="Movie plot", attribute="description"),
+        "plot": fields.String(description="Movie plot"),
         "poster_path": fields.String(description="Poster path", attribute=lambda m: m.get_poster_path()),
         "rating": fields.Float(description="Vote average"),
         "genres": fields.List(fields.Nested(genre_model), description="List of genres"),

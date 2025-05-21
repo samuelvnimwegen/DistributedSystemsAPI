@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {useParams} from 'react-router-dom';
 import '../css/MoviePage.css';
 import {useNavigationHelpers} from '../routing/useNavigation';
@@ -31,7 +31,7 @@ type RatingWithUsername = {
 export const MoviePage: React.FC = () => {
     const {movie_id} = useParams<{ movie_id: string }>();
     const [movie, setMovie] = useState<Movie | null>(null);
-    const [userRating, setUserRating] = useState<number>(0);
+    const [userRating, setUserRating] = useState<number>(1);
     const [allRatings, setAllRatings] = useState<RatingWithUsername[]>([]);
     const [watched, setWatched] = useState(false);
     const {handleLogout, handleHome, goToDashboard} = useNavigationHelpers();
@@ -125,27 +125,80 @@ export const MoviePage: React.FC = () => {
         fetchRatingsWithUsernames();
     }, [movie_id]);
 
-    const submitRating = async () => {
+    const fetchRatingsWithUsernames = useCallback(async () => {
         try {
-            const response = await fetch(`/api/preference/rating/${movie_id}?rating=${userRating}`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json', "X-CSRF-TOKEN": getCookie('csrf_access_token')},
+            const response = await fetch(`/api/preference/rating/${movie_id}`, {
+                method: 'GET',
+                headers: {'Content-Type': 'application/json'}
             });
 
-            if (response.ok) {
-                await response.json();
-                setUserRating(0);
-                const refreshed = await fetch(`/api/preference/rating/${movie_id}`, {
-                    method: 'GET',
-                    headers: {'Content-Type': 'application/json'}
-                });
-                const data = await refreshed.json();
-                setAllRatings(data.results);
+            if (!response.ok) {
+                throw new Error('Failed to fetch ratings');
             }
-        } catch (error) {
-            console.error('Error submitting rating:', error);
+
+            const data = await response.json();
+            const ratings: RatingWithUsername[] = data.results;
+
+            const uniqueUserIds = [...new Set(ratings.map(r => r.user_id))];
+            const idToUsername: Record<number, string> = {};
+
+            await Promise.all(
+                uniqueUserIds.map(async (user_id) => {
+                    try {
+                        const res = await fetch(`/api/users/retrieve/${user_id}`);
+                        if (!res.ok) throw new Error();
+                        const userData: { username: string; user_id: number } = await res.json();
+                        idToUsername[user_id] = userData.username;
+                    } catch (err) {
+                        console.error(`Failed to retrieve username for user ${user_id}`, err);
+                        idToUsername[user_id] = 'Unknown';
+                    }
+                })
+            );
+
+            const combined: RatingWithUsername[] = ratings.map((r) => ({
+                user_id: r.user_id,
+                rating: r.rating,
+                username: idToUsername[r.user_id] || 'Unknown',
+                rating_id: r.rating_id
+            }));
+
+            setAllRatings(combined);
+        } catch (err) {
+            console.error('Error fetching ratings and usernames:', err);
         }
-    };
+    }, [movie_id]);
+
+    // ✅ Call on mount or when movie_id changes
+    useEffect(() => {
+        fetchRatingsWithUsernames();
+    }, [fetchRatingsWithUsernames]);
+
+    // ✅ Submit rating and refresh ratings via shared function
+    const submitRating = async () => {
+    if (userRating < 1 || userRating > 10) {
+        alert("Please enter a rating between 1 and 10.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/preference/rating/${movie_id}?rating=${userRating}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': getCookie('csrf_access_token'),
+            },
+        });
+
+        if (response.ok) {
+            await response.json();
+            setUserRating(1);
+            await fetchRatingsWithUsernames();
+        }
+    } catch (error) {
+        console.error('Error submitting rating:', error);
+    }
+};
 
     const handleWatch = async () => {
         try {
@@ -168,24 +221,24 @@ export const MoviePage: React.FC = () => {
     };
 
     const handleReviewReaction = async (ratingId: number, reaction: 'like' | 'dislike') => {
-    try {
-        const agreed: boolean = reaction === 'like';
-        const response = await fetch(`/api/rating_review/${ratingId}?agreed=${agreed}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': getCookie('csrf_access_token'),
-            },
-        });
+        try {
+            const agreed: boolean = reaction === 'like';
+            const response = await fetch(`/api/rating_review/${ratingId}?agreed=${agreed}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': getCookie('csrf_access_token'),
+                },
+            });
 
-        if (!response.ok) {
-            throw new Error('Reaction failed');
+            if (!response.ok) {
+                throw new Error('Reaction failed');
+            }
+
+        } catch (error) {
+            console.error(`Error reacting to review:`, error);
         }
-
-    } catch (error) {
-        console.error(`Error reacting to review:`, error);
-    }
-};
+    };
 
     function getCookie(name: string): string {
         const value = `; ${document.cookie}`;

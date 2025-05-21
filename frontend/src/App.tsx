@@ -9,6 +9,7 @@ import Dashboard from "./components/Dashboard.tsx";
 import SignUpPage from "./components/SignUpPage.tsx";
 import FriendsPage from "./components/FriendsPage.tsx";
 import MoviePage from "./components/MoviePage.tsx";
+import UserPage from "./components/UserPage.tsx";
 
 function App() {
 
@@ -34,13 +35,18 @@ function App() {
               </PrivateRoute>
             } />
             <Route
-                path="/friends"
+                path="/users"
                 element={
                 <PrivateRoute>
                     <FriendsPage />
                 </PrivateRoute>
                 }
             />
+            <Route path="/users/:user_id" element={
+                <PrivateRoute>
+                    <UserPage />
+                </PrivateRoute>
+                } />
         </Routes>
       </Router>
     </AuthProvider>

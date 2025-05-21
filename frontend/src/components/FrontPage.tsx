@@ -76,7 +76,7 @@ const FrontPage: React.FC = () => {
           >
               Login
           </button>}
-        <h1 className="top-bar-title">Welcome to Absolute Cinema</h1>
+        <h1 className="top-bar-title">Welcome to NextFilm</h1>
           {isAuthenticated && <button
               onClick={() => navigate('/dashboard')}
               className="login-button"
@@ -107,7 +107,6 @@ const FrontPage: React.FC = () => {
           />
           <div className="p-6">
             <h3 className="text-3xl font-bold">{movies[0]?.title}</h3>
-            <p className="mt-2 text-gray-300">Released: {movies[0]?.releaseDate}</p>
           </div>
         </div>
       </section>
@@ -127,7 +126,6 @@ const FrontPage: React.FC = () => {
                 />
                 <div className="movie-details">
                   <h3 className="movie-title">{movie.title}</h3>
-                  <p className="movie-release-date">Released: {movie.releaseDate}</p>
                 </div>
               </div>
             ))}

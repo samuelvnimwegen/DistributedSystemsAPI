@@ -35,8 +35,12 @@ export const useNavigationHelpers = () => {
     };
 
     const goToFriends = () => {
-        navigate('/friends');
+        navigate('/users');
     };
 
-    return { handleLogout, handleHome, goToDashboard, goToFriends };
+    const handleMovie = (movieId: number) => {
+        navigate('/movies/' + movieId);
+    };
+
+    return { handleLogout, handleHome, goToDashboard, goToFriends, handleMovie };
 };

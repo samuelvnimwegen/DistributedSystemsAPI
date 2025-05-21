@@ -59,7 +59,7 @@ const LoginPage = () => {
         >
           Home
         </button>
-        <h1 className="top-bar-title">Absolute Cinema</h1>
+        <h1 className="top-bar-title">NextFilm</h1>
       </header>
 
         {/* Login Form */}
