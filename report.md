@@ -106,6 +106,7 @@ Automated CI/CD pipeline includes:
 - Running all tests (API and database).
 - Code linting and static type checks.
 - Booting up the project and verifying functionality using `consume_api.py`.
+https://github.com/samuelvnimwegen/DistributedSystemsAPI/actions
 
 ### Database
 
