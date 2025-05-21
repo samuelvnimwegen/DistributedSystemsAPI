@@ -41,7 +41,7 @@ services:
       - default
     volumes:
       - ./frontend:/app
-      - /app/node_modules
+      - node_modules:/app/node_modules
     command: npm run dev
     working_dir: /app
     environment:
@@ -74,13 +74,13 @@ services:
     networks:
       - default
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "ds_user", "-d", "movie_db"]
+      test: [ "CMD", "pg_isready", "-U", "ds_user", "-d", "movie_db" ]
       interval: 10s
       retries: 5
       start_period: 30s
       timeout: 10s
     ports:
-        - "5433:5432" # Expose Postgres to the host machine for debugging purposes
+      - "5433:5432" # Expose Postgres to the host machine for debugging purposes
 
   activity_db:
     image: postgres:17-alpine
@@ -95,7 +95,7 @@ services:
     networks:
       - default
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "ds_user", "-d", "activity_db"]
+      test: [ "CMD", "pg_isready", "-U", "ds_user", "-d", "activity_db" ]
       interval: 10s
       retries: 5
       start_period: 30s
@@ -116,7 +116,7 @@ services:
     networks:
       - default
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "ds_user", "-d", "preference_db"]
+      test: [ "CMD", "pg_isready", "-U", "ds_user", "-d", "preference_db" ]
       interval: 10s
       retries: 5
       start_period: 30s
@@ -137,7 +137,7 @@ services:
     networks:
       - default
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "ds_user", "-d", "user_db"]
+      test: [ "CMD", "pg_isready", "-U", "ds_user", "-d", "user_db" ]
       interval: 10s
       retries: 5
       start_period: 30s
@@ -150,4 +150,4 @@ volumes:
   preference_pgdata:
   activity_pgdata:
   movie_pgdata:
-
+  node_modules:
