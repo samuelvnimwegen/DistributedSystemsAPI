@@ -122,9 +122,9 @@ A custom frontend is available at `http://localhost`, interfacing with the backe
 
 ### Screenshots
 
-![Screenshot 1](img.png)  
-![Screenshot 2](img_1.png)  
-![Screenshot 3](img_2.png)  
-![Screenshot 4](img_3.png)  
-![Screenshot 5](img_4.png)  
-![Screenshot 6](img_5.png)
+![Screenshot 1](images/img.png)  
+![Screenshot 2](images/img_1.png)  
+![Screenshot 3](images/img_2.png)  
+![Screenshot 4](images/img_3.png)  
+![Screenshot 5](images/img_4.png)  
+![Screenshot 6](images/img_5.png)
